@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Unit - {{ unit.name }} - Notu{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="futuristic-card glow-effect">
+            <div class="card-header">
+                <h4 class="tw-mb-0">
+                    <i class="fas fa-edit tw-mr-2 tw-text-green-400"></i>Edit Unit
+                </h4>
+                <p class="tw-text-sm tw-text-gray-400 tw-mb-0">{{ unit.course.name }} ({{ unit.course.prefix|upper }})</p>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="futuristic-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="row">
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="name" class="form-label">Unit Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   value="{{ unit.name }}" placeholder="e.g., Database Management Systems">
+                        </div>
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="slug" class="form-label">URL Slug</label>
+                            <input type="text" class="form-control" id="slug" name="slug" required 
+                                   value="{{ unit.slug }}" placeholder="e.g., dbms" pattern="[a-z0-9-]+" 
+                                   title="Only lowercase letters, numbers, and hyphens allowed">
+                            <div class="form-text tw-text-gray-400">
+                                Used in URLs: /c/{{ unit.course.prefix }}/<span id="slug-preview">{{ unit.slug }}</span>/notes
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tw-mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Brief description of this unit...">{{ unit.description or '' }}</textarea>
+                    </div>
+                    
+                    <div class="tw-mb-4">
+                        <label for="order" class="form-label">Display Order</label>
+                        <input type="number" class="form-control" id="order" name="order" 
+                               value="{{ unit.order }}" min="0">
+                        <div class="form-text tw-text-gray-400">
+                            Lower numbers appear first in lists
+                        </div>
+                    </div>
+                    
+                    <div class="tw-flex tw-justify-between tw-items-center">
+                        <a href="{{ url_for('admin.manage_units', course_id=unit.course_id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left tw-mr-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save tw-mr-2"></i>Update Unit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Unit Stats -->
+        <div class="card tw-mt-4">
+            <div class="card-body">
+                <h6 class="card-title tw-text-white tw-mb-3">
+                    <i class="fas fa-chart-bar tw-mr-2 tw-text-blue-400"></i>Unit Statistics
+                </h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="tw-text-center">
+                            <div class="tw-text-2xl tw-font-bold tw-text-white">{{ unit.documents.count() }}</div>
+                            <div class="tw-text-sm tw-text-gray-400">Documents</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="tw-text-center">
+                            <div class="tw-text-2xl tw-font-bold tw-text-white">{{ unit.created_at.strftime('%Y-%m-%d') }}</div>
+                            <div class="tw-text-sm tw-text-gray-400">Created</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="tw-text-center">
+                            <div class="tw-text-2xl tw-font-bold tw-text-white">{{ unit.order }}</div>
+                            <div class="tw-text-sm tw-text-gray-400">Order</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update slug preview
+document.getElementById('slug').addEventListener('input', function() {
+    document.getElementById('slug-preview').textContent = this.value || '{{ unit.slug }}';
+});
+</script>
+{% endblock %}

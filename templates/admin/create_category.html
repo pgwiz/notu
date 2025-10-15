@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Create Category - {{ course.name }} - Notu{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="futuristic-card glow-effect">
+            <div class="card-header">
+                <h4 class="tw-mb-0">
+                    <i class="fas fa-plus tw-mr-2 tw-text-green-400"></i>Create New Category
+                </h4>
+                <p class="tw-text-sm tw-text-gray-400 tw-mb-0">{{ course.name }} ({{ course.prefix|upper }})</p>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="futuristic-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="row">
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="name" class="form-label">Category Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   placeholder="e.g., Notes">
+                        </div>
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="slug" class="form-label">URL Slug</label>
+                            <input type="text" class="form-control" id="slug" name="slug" required 
+                                   placeholder="e.g., notes" pattern="[a-z0-9-]+" 
+                                   title="Only lowercase letters, numbers, and hyphens allowed">
+                            <div class="form-text tw-text-gray-400">
+                                Used in URLs: /c/{{ course.prefix }}/unit/<span id="slug-preview">notes</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="icon" class="form-label">Icon</label>
+                            <select class="form-select" id="icon" name="icon">
+                                <option value="fa-file">📄 File</option>
+                                <option value="fa-file-text">📝 Text</option>
+                                <option value="fa-tasks">✅ Tasks</option>
+                                <option value="fa-chalkboard-teacher">👨‍🏫 Lecture</option>
+                                <option value="fa-clipboard-check">📋 Exam</option>
+                                <option value="fa-project-diagram">📊 Project</option>
+                                <option value="fa-folder">📁 Folder</option>
+                                <option value="fa-book">📚 Book</option>
+                                <option value="fa-code">💻 Code</option>
+                                <option value="fa-image">🖼️ Image</option>
+                                <option value="fa-video">🎥 Video</option>
+                                <option value="fa-music">🎵 Audio</option>
+                            </select>
+                            <div class="form-text tw-text-gray-400">
+                                Preview: <i id="icon-preview" class="fa-file tw-text-lg tw-text-green-400"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="color" class="form-label">Color</label>
+                            <div class="tw-flex tw-items-center">
+                                <input type="color" class="form-control tw-w-16 tw-mr-2" id="color" name="color" 
+                                       value="#10b981">
+                                <input type="text" class="form-control" id="color-text" 
+                                       value="#10b981" pattern="#[0-9a-fA-F]{6}">
+                            </div>
+                            <div class="form-text tw-text-gray-400">
+                                Preview: <span id="color-preview" class="tw-px-2 tw-py-1 tw-rounded tw-text-white" 
+                                              style="background-color: #10b981;">Sample</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tw-mb-4">
+                        <label for="order" class="form-label">Display Order</label>
+                        <input type="number" class="form-control" id="order" name="order" value="0" min="0">
+                        <div class="form-text tw-text-gray-400">
+                            Lower numbers appear first in lists
+                        </div>
+                    </div>
+                    
+                    <div class="tw-flex tw-justify-between tw-items-center">
+                        <a href="{{ url_for('admin.manage_categories', course_id=course.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left tw-mr-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus tw-mr-2"></i>Create Category
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Help Card -->
+        <div class="card tw-mt-4">
+            <div class="card-body">
+                <h6 class="card-title tw-text-white tw-mb-3">
+                    <i class="fas fa-lightbulb tw-mr-2 tw-text-yellow-400"></i>Tips for Creating Categories
+                </h6>
+                <ul class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                    <li class="tw-mb-2">
+                        <strong>Name:</strong> Use clear, descriptive names (e.g., "Notes", "Assignments", "Lectures")
+                    </li>
+                    <li class="tw-mb-2">
+                        <strong>Slug:</strong> Keep it short and URL-friendly (lowercase, no spaces)
+                    </li>
+                    <li class="tw-mb-2">
+                        <strong>Icon:</strong> Choose an icon that represents the document type
+                    </li>
+                    <li class="tw-mb-2">
+                        <strong>Color:</strong> Use colors that are accessible and match your theme
+                    </li>
+                    <li class="tw-mb-0">
+                        <strong>Order:</strong> Use 0, 10, 20, etc. to easily reorder later
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-generate slug from name
+document.getElementById('name').addEventListener('input', function() {
+    const name = this.value;
+    const slug = name.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim('-');
+    
+    document.getElementById('slug').value = slug;
+    document.getElementById('slug-preview').textContent = slug || 'notes';
+});
+
+// Update slug preview
+document.getElementById('slug').addEventListener('input', function() {
+    document.getElementById('slug-preview').textContent = this.value || 'notes';
+});
+
+// Update icon preview
+document.getElementById('icon').addEventListener('change', function() {
+    const iconClass = this.value;
+    const preview = document.getElementById('icon-preview');
+    preview.className = `${iconClass} tw-text-lg tw-text-green-400`;
+});
+
+// Sync color inputs
+document.getElementById('color').addEventListener('input', function() {
+    document.getElementById('color-text').value = this.value;
+    updateColorPreview();
+});
+
+document.getElementById('color-text').addEventListener('input', function() {
+    if (this.value.match(/^#[0-9a-fA-F]{6}$/)) {
+        document.getElementById('color').value = this.value;
+        updateColorPreview();
+    }
+});
+
+function updateColorPreview() {
+    const color = document.getElementById('color').value;
+    const preview = document.getElementById('color-preview');
+    preview.style.backgroundColor = color;
+}
+</script>
+{% endblock %}

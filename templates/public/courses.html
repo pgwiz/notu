@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Courses - Notu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="tw-mb-6">
+            <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">
+                <i class="fas fa-graduation-cap tw-mr-2 tw-text-green-400"></i>Courses
+            </h1>
+            <p class="tw-text-gray-400">Browse available courses and their documents.</p>
+        </div>
+        
+        {% if courses %}
+        <div class="row">
+            {% for course in courses %}
+            <div class="col-md-6 col-lg-4 tw-mb-4">
+                <div class="card document-card h-100">
+                    <div class="card-body">
+                        <div class="tw-flex tw-items-center tw-mb-3">
+                            <i class="fas fa-graduation-cap tw-text-2xl tw-text-green-400 tw-mr-3"></i>
+                            <div>
+                                <h5 class="card-title tw-text-white tw-mb-0">{{ course.name }}</h5>
+                                <small class="tw-text-gray-400">{{ course.prefix }}</small>
+                            </div>
+                        </div>
+                        
+                        {% if course.description %}
+                        <p class="card-text tw-text-gray-400 tw-text-sm tw-mb-3">
+                            {{ course.description }}
+                        </p>
+                        {% endif %}
+                        
+                        <div class="tw-mb-3">
+                            <div class="row tw-text-center">
+                                <div class="col-3">
+                                    <div class="tw-text-sm tw-text-gray-400">Notes</div>
+                                    <div class="tw-text-lg tw-font-bold tw-text-white">{{ course_stats[course.id].notes }}</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="tw-text-sm tw-text-gray-400">Assignments</div>
+                                    <div class="tw-text-lg tw-font-bold tw-text-white">{{ course_stats[course.id].assignments }}</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="tw-text-sm tw-text-gray-400">Lectures</div>
+                                    <div class="tw-text-lg tw-font-bold tw-text-white">{{ course_stats[course.id].lectures }}</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="tw-text-sm tw-text-gray-400">Others</div>
+                                    <div class="tw-text-lg tw-font-bold tw-text-white">{{ course_stats[course.id].others }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tw-flex tw-justify-between tw-items-center">
+                            <span class="badge badge-info">
+                                {{ course_stats[course.id].total }} documents
+                            </span>
+                            <a href="{{ url_for('public.course_overview', prefix=course.prefix) }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye tw-mr-1"></i>View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body tw-text-center tw-py-8">
+                <i class="fas fa-graduation-cap tw-text-4xl tw-text-gray-500 tw-mb-3"></i>
+                <h5 class="tw-text-gray-400 tw-mb-3">No courses available</h5>
+                <p class="tw-text-gray-500 tw-mb-0">Courses will appear here when they are created by administrators.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

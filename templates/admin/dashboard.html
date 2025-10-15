@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Notu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Welcome Section -->
+        <div class="tw-mb-6">
+            <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">
+                <i class="fas fa-cog tw-mr-2 tw-text-green-400"></i>Admin Dashboard
+            </h1>
+            <p class="tw-text-gray-400">Manage courses, users, and system settings.</p>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-links-grid tw-mb-6">
+            <a href="{{ url_for('admin.create_course') }}" class="quick-link-item">
+                <i class="fas fa-plus-circle"></i>
+                <h6>Create Course</h6>
+                <p>Add a new course to the system</p>
+            </a>
+            <a href="{{ url_for('admin.courses') }}" class="quick-link-item">
+                <i class="fas fa-graduation-cap"></i>
+                <h6>Manage Courses</h6>
+                <p>View and edit existing courses</p>
+            </a>
+            <a href="{{ url_for('admin.units') }}" class="quick-link-item">
+                <i class="fas fa-layer-group"></i>
+                <h6>Manage Units</h6>
+                <p>Organize course units and modules</p>
+            </a>
+            <a href="{{ url_for('admin.categories') }}" class="quick-link-item">
+                <i class="fas fa-tags"></i>
+                <h6>Manage Categories</h6>
+                <p>Document categories and types</p>
+            </a>
+            <a href="{{ url_for('admin.users') }}" class="quick-link-item">
+                <i class="fas fa-users"></i>
+                <h6>Manage Users</h6>
+                <p>User accounts and permissions</p>
+            </a>
+            <a href="{{ url_for('admin.storage') }}" class="quick-link-item">
+                <i class="fas fa-hdd"></i>
+                <h6>Storage Settings</h6>
+                <p>Configure storage backends</p>
+            </a>
+            <a href="{{ url_for('admin.s3_test') }}" class="quick-link-item">
+                <i class="fas fa-cloud"></i>
+                <h6>S3 Storage Test</h6>
+                <p>Test S3 connection and CRUD operations</p>
+            </a>
+            <a href="{{ url_for('admin.sync') }}" class="quick-link-item">
+                <i class="fas fa-sync"></i>
+                <h6>Storage Sync</h6>
+                <p>Synchronize storage backends</p>
+            </a>
+            <a href="{{ url_for('admin.themes') }}" class="quick-link-item">
+                <i class="fas fa-palette"></i>
+                <h6>Manage Themes</h6>
+                <p>Customize appearance</p>
+            </a>
+        </div>
+        
+        <!-- System Statistics -->
+        <div class="row tw-mb-6">
+            <div class="col-md-3 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center">
+                    <i class="fas fa-users stat-icon tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <div class="stat-number">{{ total_users }}</div>
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up tw-mr-1"></i>+{{ new_users_this_month }} this month
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center">
+                    <i class="fas fa-user-check stat-icon tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <div class="stat-number">{{ active_users }}</div>
+                    <div class="stat-label">Active Users</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-percentage tw-mr-1"></i>{{ (active_users / total_users * 100) | round(1) }}% active
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center">
+                    <i class="fas fa-graduation-cap stat-icon tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <div class="stat-number">{{ total_courses }}</div>
+                    <div class="stat-label">Courses</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-plus tw-mr-1"></i>{{ courses_this_month }} this month
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center">
+                    <i class="fas fa-file stat-icon tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <div class="stat-number">{{ total_documents }}</div>
+                    <div class="stat-label">Documents</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up tw-mr-1"></i>+{{ documents_this_week }} this week
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Storage & Performance Statistics -->
+        <div class="row tw-mb-6">
+            <div class="col-md-4 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center">
+                    <i class="fas fa-hdd stat-icon tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <div class="stat-number">{{ total_storage_gb }} GB</div>
+                    <div class="stat-label">Storage Used</div>
+                    <div class="stat-change">
+                        <i class="fas fa-chart-line tw-mr-1"></i>{{ storage_growth }}% growth
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center">
+                    <i class="fas fa-globe stat-icon tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <div class="stat-number">{{ public_documents }}</div>
+                    <div class="stat-label">Public Documents</div>
+                    <div class="stat-change">
+                        <i class="fas fa-percentage tw-mr-1"></i>{{ (public_documents / total_documents * 100) | round(1) }}% public
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center">
+                    <i class="fas fa-download stat-icon tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <div class="stat-number">{{ total_downloads }}</div>
+                    <div class="stat-label">Total Downloads</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up tw-mr-1"></i>+{{ downloads_today }} today
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="tw-mb-6">
+            <div class="tw-flex tw-justify-between tw-items-center tw-mb-4">
+                <h2 class="tw-text-2xl tw-font-bold tw-text-white tw-mb-0">
+                    <i class="fas fa-history tw-mr-2 tw-text-green-400"></i>Recent Activity
+                </h2>
+                <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-outline-primary btn-sm">
+                    View All Logs
+                </a>
+            </div>
+            
+            {% if recent_logs %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Subject</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                <tr>
+                                    <td class="tw-text-sm">{{ log.created_at.strftime('%H:%M') }}</td>
+                                    <td class="tw-text-sm">
+                                        {% if log.actor %}
+                                            {{ log.actor.email }}
+                                        {% else %}
+                                            <span class="tw-text-gray-500">Anonymous</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="tw-text-sm">
+                                        <span class="badge badge-info">{{ log.action }}</span>
+                                    </td>
+                                    <td class="tw-text-sm">{{ log.subject_type }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-body tw-text-center tw-py-8">
+                    <i class="fas fa-history tw-text-4xl tw-text-gray-500 tw-mb-3"></i>
+                    <h5 class="tw-text-gray-400 tw-mb-3">No recent activity</h5>
+                    <p class="tw-text-gray-500 tw-mb-0">Activity logs will appear here.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- System Status -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-server tw-mr-2 tw-text-green-400"></i>System Status
+            </h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="tw-mb-4">
+                        <div class="status-indicator tw-flex tw-justify-between tw-items-center tw-mb-2">
+                            <span class="tw-text-sm tw-text-gray-400">Active Storage</span>
+                            <span class="tw-text-sm tw-text-white">{{ active_backend|title }}</span>
+                        </div>
+                        <div class="progress-enhanced">
+                            <div class="progress-bar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="tw-mb-4">
+                        <div class="status-indicator tw-flex tw-justify-between tw-items-center tw-mb-2">
+                            <span class="tw-text-sm tw-text-gray-400">Database</span>
+                            <span class="tw-text-sm tw-text-white">Online</span>
+                        </div>
+                        <div class="progress-enhanced">
+                            <div class="progress-bar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="tw-mb-4">
+                        <div class="status-indicator tw-flex tw-justify-between tw-items-center tw-mb-2">
+                            <span class="tw-text-sm tw-text-gray-400">System Load</span>
+                            <span class="tw-text-sm tw-text-white">Normal</span>
+                        </div>
+                        <div class="progress-enhanced">
+                            <div class="progress-bar" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="tw-mb-0">
+                        <div class="status-indicator tw-flex tw-justify-between tw-items-center tw-mb-2">
+                            <span class="tw-text-sm tw-text-gray-400">Uptime</span>
+                            <span class="tw-text-sm tw-text-white">{{ system_uptime }}</span>
+                        </div>
+                        <div class="progress-enhanced">
+                            <div class="progress-bar" style="width: 95%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Management -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-tools tw-mr-2 tw-text-green-400"></i>Quick Management
+            </h3>
+            <div class="list-group">
+                <a href="{{ url_for('admin.courses') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-graduation-cap tw-mr-2 tw-text-green-400"></i>
+                    Manage Courses
+                </a>
+                <a href="{{ url_for('admin.themes') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-palette tw-mr-2 tw-text-green-400"></i>
+                    Manage Themes
+                </a>
+                <a href="{{ url_for('admin.sync') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-sync tw-mr-2 tw-text-green-400"></i>
+                    Storage Sync
+                </a>
+                <a href="{{ url_for('admin.settings') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-cog tw-mr-2 tw-text-green-400"></i>
+                    System Settings
+                </a>
+            </div>
+        </div>
+        
+        <!-- Storage Backend Info -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-hdd tw-mr-2 tw-text-green-400"></i>Storage Backend
+            </h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="tw-mb-3">
+                        <div class="tw-flex tw-justify-between tw-items-center">
+                            <span class="tw-text-sm tw-text-gray-400">Current Backend</span>
+                            <span class="badge badge-success">{{ active_backend|title }}</span>
+                        </div>
+                    </div>
+                    <div class="tw-mb-3">
+                        <div class="tw-flex tw-justify-between tw-items-center">
+                            <span class="tw-text-sm tw-text-gray-400">Total Files</span>
+                            <span class="tw-text-sm tw-text-white">{{ total_documents }}</span>
+                        </div>
+                    </div>
+                    <div class="tw-mb-0">
+                        <div class="tw-flex tw-justify-between tw-items-center">
+                            <span class="tw-text-sm tw-text-gray-400">Storage Used</span>
+                            <span class="tw-text-sm tw-text-white">{{ total_storage_mb }} MB</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Alerts -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-exclamation-triangle tw-mr-2 tw-text-green-400"></i>System Alerts
+            </h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="alert alert-success tw-mb-3" role="alert">
+                        <i class="fas fa-check-circle tw-mr-2"></i>
+                        System running normally
+                    </div>
+                    {% if total_storage_mb > 1000 %}
+                    <div class="alert alert-warning tw-mb-3" role="alert">
+                        <i class="fas fa-exclamation-triangle tw-mr-2"></i>
+                        Storage usage is high
+                    </div>
+                    {% endif %}
+                    {% if active_users < total_users %}
+                    <div class="alert alert-info tw-mb-0" role="alert">
+                        <i class="fas fa-info-circle tw-mr-2"></i>
+                        {{ total_users - active_users }} inactive users
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

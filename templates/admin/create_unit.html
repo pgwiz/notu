@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Create Unit - {{ course.name }} - Notu{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="futuristic-card glow-effect">
+            <div class="card-header">
+                <h4 class="tw-mb-0">
+                    <i class="fas fa-plus tw-mr-2 tw-text-green-400"></i>Create New Unit
+                </h4>
+                <p class="tw-text-sm tw-text-gray-400 tw-mb-0">{{ course.name }} ({{ course.prefix|upper }})</p>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="futuristic-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="row">
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="name" class="form-label">Unit Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   placeholder="e.g., Database Management Systems">
+                        </div>
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="slug" class="form-label">URL Slug</label>
+                            <input type="text" class="form-control" id="slug" name="slug" required 
+                                   placeholder="e.g., dbms" pattern="[a-z0-9-]+" 
+                                   title="Only lowercase letters, numbers, and hyphens allowed">
+                            <div class="form-text tw-text-gray-400">
+                                Used in URLs: /c/{{ course.prefix }}/<span id="slug-preview">dbms</span>/notes
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tw-mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Brief description of this unit..."></textarea>
+                    </div>
+                    
+                    <div class="tw-mb-4">
+                        <label for="order" class="form-label">Display Order</label>
+                        <input type="number" class="form-control" id="order" name="order" value="0" min="0">
+                        <div class="form-text tw-text-gray-400">
+                            Lower numbers appear first in lists
+                        </div>
+                    </div>
+                    
+                    <div class="tw-flex tw-justify-between tw-items-center">
+                        <a href="{{ url_for('admin.manage_units', course_id=course.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left tw-mr-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus tw-mr-2"></i>Create Unit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Help Card -->
+        <div class="card tw-mt-4">
+            <div class="card-body">
+                <h6 class="card-title tw-text-white tw-mb-3">
+                    <i class="fas fa-lightbulb tw-mr-2 tw-text-yellow-400"></i>Tips for Creating Units
+                </h6>
+                <ul class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                    <li class="tw-mb-2">
+                        <strong>Name:</strong> Use clear, descriptive names that students will recognize
+                    </li>
+                    <li class="tw-mb-2">
+                        <strong>Slug:</strong> Keep it short and URL-friendly (lowercase, no spaces)
+                    </li>
+                    <li class="tw-mb-2">
+                        <strong>Order:</strong> Use 0, 10, 20, etc. to easily reorder later
+                    </li>
+                    <li class="tw-mb-0">
+                        <strong>Examples:</strong> "Introduction to Programming" (slug: intro), "Data Structures" (slug: data-structures)
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-generate slug from name
+document.getElementById('name').addEventListener('input', function() {
+    const name = this.value;
+    const slug = name.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim('-');
+    
+    document.getElementById('slug').value = slug;
+    document.getElementById('slug-preview').textContent = slug || 'dbms';
+});
+
+// Update slug preview
+document.getElementById('slug').addEventListener('input', function() {
+    document.getElementById('slug-preview').textContent = this.value || 'dbms';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Notu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Welcome Section -->
+        <div class="tw-mb-6">
+            <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">
+                Welcome back, {{ current_user.email }}!
+            </h1>
+            <p class="tw-text-gray-400">Manage your documents and track your uploads.</p>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="row tw-mb-6">
+            <div class="col-md-6 tw-mb-3">
+                <a href="{{ url_for('user.upload') }}" class="btn btn-primary btn-lg w-100">
+                    <i class="fas fa-upload tw-mr-2"></i>Upload New Document
+                </a>
+            </div>
+            <div class="col-md-6 tw-mb-3">
+                <a href="{{ url_for('user.documents') }}" class="btn btn-outline-primary btn-lg w-100">
+                    <i class="fas fa-folder tw-mr-2"></i>View All Documents
+                </a>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="row tw-mb-6">
+            <div class="col-md-3 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center glow-effect">
+                    <i class="fas fa-file tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <h4 class="tw-text-2xl tw-font-bold tw-text-white">{{ stats.total_documents }}</h4>
+                    <p class="tw-text-sm tw-text-gray-400 tw-mb-0">Total Documents</p>
+                </div>
+            </div>
+            <div class="col-md-3 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center glow-effect">
+                    <i class="fas fa-globe tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <h4 class="tw-text-2xl tw-font-bold tw-text-white">{{ stats.public_documents }}</h4>
+                    <p class="tw-text-sm tw-text-gray-400 tw-mb-0">Public</p>
+                </div>
+            </div>
+            <div class="col-md-3 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center glow-effect">
+                    <i class="fas fa-lock tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <h4 class="tw-text-2xl tw-font-bold tw-text-white">{{ stats.private_documents }}</h4>
+                    <p class="tw-text-sm tw-text-gray-400 tw-mb-0">Private</p>
+                </div>
+            </div>
+            <div class="col-md-3 tw-mb-3">
+                <div class="stat-card tw-p-4 tw-rounded-lg tw-text-center glow-effect">
+                    <i class="fas fa-hdd tw-text-2xl tw-text-green-400 tw-mb-2"></i>
+                    <h4 class="tw-text-2xl tw-font-bold tw-text-white">{{ stats.total_storage_mb }} MB</h4>
+                    <p class="tw-text-sm tw-text-gray-400 tw-mb-0">Storage Used</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Documents -->
+        <div class="tw-mb-6">
+            <div class="tw-flex tw-justify-between tw-items-center tw-mb-4">
+                <h2 class="tw-text-2xl tw-font-bold tw-text-white tw-mb-0">
+                    <i class="fas fa-clock tw-mr-2 tw-text-green-400"></i>Recent Documents
+                </h2>
+                <a href="{{ url_for('user.documents') }}" class="btn btn-outline-primary btn-sm">
+                    View All
+                </a>
+            </div>
+            
+            {% if recent_docs %}
+            <div class="row">
+                {% for doc in recent_docs %}
+                <div class="col-md-6 col-lg-4 tw-mb-4">
+                    <div class="card document-card h-100">
+                        <div class="card-body">
+                            <div class="tw-flex tw-items-start tw-mb-3">
+                                <i class="fas fa-file-pdf tw-text-red-500 tw-mr-2 tw-text-xl tw-flex-shrink-0"></i>
+                                <h6 class="card-title tw-mb-0 tw-text-white tw-break-words tw-leading-tight">{{ doc.title }}</h6>
+                            </div>
+                            <p class="card-text tw-text-sm tw-text-gray-400">
+                                <i class="fas fa-graduation-cap tw-mr-1"></i>{{ doc.course.name }}<br>
+                                <i class="fas fa-folder tw-mr-1"></i>{{ doc.category|title }}<br>
+                                <i class="fas fa-calendar tw-mr-1"></i>{{ doc.created_at.strftime('%Y-%m-%d') }}
+                            </p>
+                            <div class="tw-flex tw-justify-between tw-items-center">
+                                <span class="badge badge-{{ 'success' if doc.visibility == 'public' else 'warning' }}">
+                                    {{ doc.visibility|title }}
+                                </span>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('public.view_document', doc_id=doc.id) }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('user.edit_document', doc_id=doc.id) }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-body tw-text-center tw-py-8">
+                    <i class="fas fa-file-upload tw-text-4xl tw-text-gray-500 tw-mb-3"></i>
+                    <h5 class="tw-text-gray-400 tw-mb-3">No documents yet</h5>
+                    <p class="tw-text-gray-500 tw-mb-4">Upload your first document to get started!</p>
+                    <a href="{{ url_for('user.upload') }}" class="btn btn-primary">
+                        <i class="fas fa-upload tw-mr-2"></i>Upload Document
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Upload Form -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-upload tw-mr-2 tw-text-green-400"></i>Quick Upload
+            </h3>
+            <form action="{{ url_for('user.upload') }}" method="POST" enctype="multipart/form-data">
+                <div class="tw-mb-3">
+                    <label for="file" class="form-label">Select File</label>
+                    <div class="file-drop-zone" id="dashboard-upload-area">
+                        <i class="fas fa-cloud-upload-alt drop-icon"></i>
+                        <div class="drop-text">Drag and drop your file here</div>
+                        <div class="drop-subtext">or click to browse</div>
+                        <input type="file" class="form-control" id="file" name="file" required accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mp3,.zip,.rar">
+                    </div>
+                    <div class="file-preview tw-mt-3" id="file-preview" style="display: none;">
+                        <div class="tw-flex tw-items-center tw-p-3 tw-bg-gray-700 tw-rounded-lg">
+                            <i class="fas fa-file tw-text-2xl tw-text-green-400 tw-mr-3"></i>
+                            <div class="tw-flex-1">
+                                <div class="tw-text-white tw-font-medium" id="file-name"></div>
+                                <div class="tw-text-gray-400 tw-text-sm" id="file-size"></div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tw-mb-3">
+                    <label for="course_id" class="form-label">Course</label>
+                    <select class="form-select" id="course_id" name="course_id" required>
+                        <option value="">Select a course...</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}">{{ course.name }} ({{ course.prefix }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="tw-mb-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select class="form-select" id="category" name="category" required>
+                        <option value="">Select category...</option>
+                        <option value="notes">Notes</option>
+                        <option value="assignments">Assignments</option>
+                        <option value="lectures">Lectures</option>
+                        <option value="exams">Exams</option>
+                        <option value="projects">Projects</option>
+                        <option value="others">Others</option>
+                    </select>
+                </div>
+                <div class="tw-mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+                <div class="tw-mb-3">
+                    <label for="visibility" class="form-label">Visibility</label>
+                    <select class="form-select" id="visibility" name="visibility">
+                        <option value="private">Private</option>
+                        <option value="public">Public</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-upload tw-mr-2"></i>Upload
+                </button>
+            </form>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-chart-pie tw-mr-2 tw-text-green-400"></i>Quick Stats
+            </h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="tw-mb-3">
+                        <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                            <span class="tw-text-sm tw-text-gray-400">Storage Used</span>
+                            <span class="tw-text-sm tw-text-white">{{ stats.total_storage_mb }} MB</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar" style="width: {{ (stats.total_storage_mb / 1000 * 100)|round(1) }}%"></div>
+                        </div>
+                    </div>
+                    <div class="tw-mb-3">
+                        <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                            <span class="tw-text-sm tw-text-gray-400">Public Documents</span>
+                            <span class="tw-text-sm tw-text-white">{{ stats.public_documents }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: {{ (stats.public_documents / stats.total_documents * 100)|round(1) if stats.total_documents > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="tw-mb-0">
+                        <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                            <span class="tw-text-sm tw-text-gray-400">Private Documents</span>
+                            <span class="tw-text-sm tw-text-white">{{ stats.private_documents }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: {{ (stats.private_documents / stats.total_documents * 100)|round(1) if stats.total_documents > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-history tw-mr-2 tw-text-green-400"></i>Recent Activity
+            </h3>
+            <div class="card">
+                <div class="card-body">
+                    <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                        <i class="fas fa-info-circle tw-mr-2"></i>
+                        Your recent activity will appear here.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced file input functionality for dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('dashboard-upload-area');
+    const fileInput = document.getElementById('file');
+    const filePreview = document.getElementById('file-preview');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            showFilePreview(files[0]);
+        }
+    });
+    
+    // Click to select file
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            showFilePreview(e.target.files[0]);
+        }
+    });
+    
+    // Show file preview
+    function showFilePreview(file) {
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        filePreview.style.display = 'block';
+        
+        // Update icon based on file type
+        const icon = filePreview.querySelector('i');
+        const fileType = file.type.split('/')[0];
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        
+        if (fileType === 'image') {
+            icon.className = 'fas fa-image tw-text-2xl tw-text-green-400 tw-mr-3';
+        } else if (fileType === 'video') {
+            icon.className = 'fas fa-video tw-text-2xl tw-text-green-400 tw-mr-3';
+        } else if (fileType === 'audio') {
+            icon.className = 'fas fa-music tw-text-2xl tw-text-green-400 tw-mr-3';
+        } else if (fileExtension === 'pdf') {
+            icon.className = 'fas fa-file-pdf tw-text-2xl tw-text-red-400 tw-mr-3';
+        } else if (['doc', 'docx'].includes(fileExtension)) {
+            icon.className = 'fas fa-file-word tw-text-2xl tw-text-blue-400 tw-mr-3';
+        } else if (['zip', 'rar', '7z'].includes(fileExtension)) {
+            icon.className = 'fas fa-file-archive tw-text-2xl tw-text-yellow-400 tw-mr-3';
+        } else {
+            icon.className = 'fas fa-file tw-text-2xl tw-text-green-400 tw-mr-3';
+        }
+    }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Clear file function
+    window.clearFile = function() {
+        fileInput.value = '';
+        filePreview.style.display = 'none';
+    };
+    
+    // Dynamic dropdown handling for course/unit/category
+    const courseSelect = document.getElementById('course_id');
+    const unitSelect = document.getElementById('unit_id');
+    const categorySelect = document.getElementById('category_id');
+    
+    if (courseSelect) {
+        courseSelect.addEventListener('change', async function() {
+            const courseId = this.value;
+            
+            // Clear dependent dropdowns
+            if (unitSelect) {
+                unitSelect.innerHTML = '<option value="">Select a unit...</option>';
+            }
+            if (categorySelect) {
+                categorySelect.innerHTML = '<option value="">Select category...</option>';
+            }
+            
+            if (!courseId) return;
+            
+            try {
+                // Load units
+                if (unitSelect) {
+                    const unitsResponse = await fetch(`/api/courses/${courseId}/units`);
+                    const units = await unitsResponse.json();
+                    unitSelect.innerHTML = '<option value="">Select a unit...</option>' +
+                        units.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
+                }
+                
+                // Load categories
+                if (categorySelect) {
+                    const categoriesResponse = await fetch(`/api/courses/${courseId}/categories`);
+                    const categories = await categoriesResponse.json();
+                    categorySelect.innerHTML = '<option value="">Select category...</option>' +
+                        categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+                }
+                        
+            } catch (error) {
+                console.error('Failed to load course data:', error);
+                alert('Failed to load course units and categories. Please try again.');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

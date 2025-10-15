@@ -1,0 +1,50 @@
+# Flask Configuration
+FLASK_ENV=development
+SECRET_KEY=your-secret-key-change-in-production
+DATABASE_URL=mysql+pymysql://notu:notu123@localhost:3306/notu
+
+# MySQL Configuration
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=
+MYSQL_DATABASE=notu
+MYSQL_ROOT_USER=root
+MYSQL_ROOT_PASSWORD=
+
+# S3 Configuration (optional)
+S3_BUCKET_NAME=storafe1
+S3_REGION=us-east-1
+AWS_ACCESS_KEY_ID=SCWDJV0ZR8G4JE59GTJM
+S3_ENDPOINT_URL=https://s3.fr-par.scw.cloud
+AWS_SECRET_ACCESS_KEY=9bec5d36-0683-475d-b9bb-df873eaf13c4
+ACTIVE_STORAGE_BACKEND=s3
+
+# File Upload Settings
+MAX_CONTENT_LENGTH=104857600  # 100MB
+ALLOWED_EXTENSIONS=pdf,doc,docx,txt,jpg,jpeg,png,gif
+
+# Storage Settings
+STORAGE_LOCAL_ROOT=./storage/local
+STORAGE_BUCKET_ROOT=storage/bucket
+
+
+# Security Settings
+WTF_CSRF_ENABLED=true
+SESSION_COOKIE_SECURE=false  # Set to true in production with HTTPS
+
+# Theme Settings
+DEFAULT_THEME=green-black
+
+# Pagination
+DOCUMENTS_PER_PAGE=20
+
+# Sync Settings
+SYNC_DRY_RUN=true
+
+# Antivirus Settings (optional)
+ANTIVIRUS_ENABLED=false
+ANTIVIRUS_PATH=/usr/bin/clamscan
+
+# Registration Settings
+ALLOW_REGISTRATION=false

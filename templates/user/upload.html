@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document - Notu{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="futuristic-card glow-effect">
+            <div class="card-header">
+                <h4 class="tw-mb-0">
+                    <i class="fas fa-upload tw-mr-2 tw-text-green-400"></i>Upload Document
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="upload-form" class="futuristic-form">
+                    {{ csrf_token() }}
+                    <div class="tw-mb-4">
+                        <label for="file" class="form-label">Select File</label>
+                        <div class="file-drop-zone" id="upload-area">
+                            <i class="fas fa-cloud-upload-alt drop-icon"></i>
+                            <div class="drop-text">Drag and drop your file here</div>
+                            <div class="drop-subtext">or click to browse</div>
+                            <input type="file" class="form-control" id="file" name="file" required accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mp3,.zip,.rar">
+                        </div>
+                        <div class="file-preview tw-mt-3" id="file-preview" style="display: none;">
+                            <div class="tw-flex tw-items-center tw-p-3 tw-bg-gray-700 tw-rounded-lg">
+                                <i class="fas fa-file tw-text-2xl tw-text-green-400 tw-mr-3"></i>
+                                <div class="tw-flex-1">
+                                    <div class="tw-text-white tw-font-medium" id="file-name"></div>
+                                    <div class="tw-text-gray-400 tw-text-sm" id="file-size"></div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 tw-mb-3">
+                            <label for="course_id" class="form-label">Course</label>
+                            <select class="form-select" id="course_id" name="course_id" required>
+                                <option value="">Select a course...</option>
+                                {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.name }} ({{ course.prefix }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 tw-mb-3">
+                            <label for="unit_id" class="form-label">Unit</label>
+                            <select class="form-select" id="unit_id" name="unit_id" required>
+                                <option value="">Select a unit...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 tw-mb-3">
+                            <label for="category_id" class="form-label">Category</label>
+                            <select class="form-select" id="category_id" name="category_id" required>
+                                <option value="">Select category...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="tw-mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required placeholder="Enter document title">
+                    </div>
+                    
+                    <div class="tw-mb-4">
+                        <label for="visibility" class="form-label">Visibility</label>
+                        <select class="form-select" id="visibility" name="visibility">
+                            <option value="private">Private (only you and admins can see)</option>
+                            <option value="public">Public (everyone can see)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="tw-flex tw-justify-between tw-items-center">
+                        <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left tw-mr-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload tw-mr-2"></i>Upload Document
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Upload Guidelines -->
+        <div class="card tw-mt-4">
+            <div class="card-header">
+                <h5 class="tw-mb-0">
+                    <i class="fas fa-info-circle tw-mr-2 tw-text-blue-400"></i>Upload Guidelines
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="tw-text-white tw-mb-2">Allowed File Types:</h6>
+                        <ul class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            <li>PDF documents (.pdf)</li>
+                            <li>Word documents (.doc, .docx)</li>
+                            <li>Text files (.txt)</li>
+                            <li>Images (.jpg, .jpeg, .png, .gif)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="tw-text-white tw-mb-2">File Size Limits:</h6>
+                        <ul class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            <li>Maximum file size: 100MB</li>
+                            <li>Recommended: Under 50MB</li>
+                            <li>Large files may take longer to upload</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dynamic dropdown handling for single upload
+document.addEventListener('DOMContentLoaded', function() {
+    const courseSelect = document.getElementById('course_id');
+    const unitSelect = document.getElementById('unit_id');
+    const categorySelect = document.getElementById('category_id');
+    
+    if (courseSelect) {
+        courseSelect.addEventListener('change', async function() {
+            const courseId = this.value;
+            
+            // Clear dependent dropdowns
+            unitSelect.innerHTML = '<option value="">Select a unit...</option>';
+            categorySelect.innerHTML = '<option value="">Select category...</option>';
+            
+            if (!courseId) return;
+            
+            try {
+                // Load units
+                const unitsResponse = await fetch(`/api/courses/${courseId}/units`);
+                const units = await unitsResponse.json();
+                unitSelect.innerHTML = '<option value="">Select a unit...</option>' +
+                    units.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
+                
+                // Load categories
+                const categoriesResponse = await fetch(`/api/courses/${courseId}/categories`);
+                const categories = await categoriesResponse.json();
+                categorySelect.innerHTML = '<option value="">Select category...</option>' +
+                    categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+                    
+            } catch (error) {
+                console.error('Failed to load course data:', error);
+                alert('Failed to load course units and categories. Please try again.');
+            }
+        });
+    }
+    
+    if (unitSelect) {
+        unitSelect.addEventListener('change', function() {
+            // Unit change doesn't affect categories in single upload mode
+            // Categories are loaded when course changes
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Enhanced file input functionality for single upload
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file');
+    const filePreview = document.getElementById('file-preview');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            showFilePreview(files[0]);
+        }
+    });
+    
+    // Click to select file
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            showFilePreview(e.target.files[0]);
+        }
+    });
+    
+    // Show file preview
+    function showFilePreview(file) {
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        filePreview.style.display = 'block';
+        
+        // Update icon based on file type
+        const icon = filePreview.querySelector('i');
+        const fileType = file.type.split('/')[0];
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        
+        if (fileType === 'image') {
+            icon.className = 'fas fa-image tw-text-2xl tw-text-green-400 tw-mr-3';
+        } else if (fileType === 'video') {
+            icon.className = 'fas fa-video tw-text-2xl tw-text-green-400 tw-mr-3';
+        } else if (fileType === 'audio') {
+            icon.className = 'fas fa-music tw-text-2xl tw-text-green-400 tw-mr-3';
+        } else if (fileExtension === 'pdf') {
+            icon.className = 'fas fa-file-pdf tw-text-2xl tw-text-red-400 tw-mr-3';
+        } else if (['doc', 'docx'].includes(fileExtension)) {
+            icon.className = 'fas fa-file-word tw-text-2xl tw-text-blue-400 tw-mr-3';
+        } else if (['zip', 'rar', '7z'].includes(fileExtension)) {
+            icon.className = 'fas fa-file-archive tw-text-2xl tw-text-yellow-400 tw-mr-3';
+        } else {
+            icon.className = 'fas fa-file tw-text-2xl tw-text-green-400 tw-mr-3';
+        }
+    }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Clear file function
+    window.clearFile = function() {
+        fileInput.value = '';
+        filePreview.style.display = 'none';
+    };
+    
+    // Dynamic dropdown handling for course/unit/category
+    const courseSelect = document.getElementById('course_id');
+    const unitSelect = document.getElementById('unit_id');
+    const categorySelect = document.getElementById('category_id');
+    
+    if (courseSelect) {
+        courseSelect.addEventListener('change', async function() {
+            const courseId = this.value;
+            
+            // Clear dependent dropdowns
+            if (unitSelect) {
+                unitSelect.innerHTML = '<option value="">Select a unit...</option>';
+            }
+            if (categorySelect) {
+                categorySelect.innerHTML = '<option value="">Select category...</option>';
+            }
+            
+            if (!courseId) return;
+            
+            try {
+                // Load units
+                if (unitSelect) {
+                    const unitsResponse = await fetch(`/api/courses/${courseId}/units`);
+                    const units = await unitsResponse.json();
+                    unitSelect.innerHTML = '<option value="">Select a unit...</option>' +
+                        units.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
+                }
+                
+                // Load categories
+                if (categorySelect) {
+                    const categoriesResponse = await fetch(`/api/courses/${courseId}/categories`);
+                    const categories = await categoriesResponse.json();
+                    categorySelect.innerHTML = '<option value="">Select category...</option>' +
+                        categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+                }
+                        
+            } catch (error) {
+                console.error('Failed to load course data:', error);
+                alert('Failed to load course units and categories. Please try again.');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

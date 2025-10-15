@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Batch Upload - Notu{% endblock %}
+
+{% block content %}
+<!-- CSRF Token for AJAX requests -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+<div class="batch-upload-container">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="tw-mb-6">
+                <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">
+                    <i class="fas fa-cloud-upload-alt tw-mr-2 tw-text-green-400"></i>Batch Upload
+                </h1>
+                <p class="tw-text-gray-400">Upload multiple files at once with flexible organization options</p>
+            </div>
+
+            <!-- Upload Mode Toggle -->
+            <div class="upload-mode-toggle">
+                <button type="button" class="upload-mode-btn active" data-mode="bulk">
+                    <i class="fas fa-layer-group tw-mr-2"></i>Bulk Assign
+                </button>
+                <button type="button" class="upload-mode-btn" data-mode="individual">
+                    <i class="fas fa-list tw-mr-2"></i>Individual Assign
+                </button>
+            </div>
+
+            <!-- Bulk Upload Form -->
+            <div id="bulk-upload-form" class="batch-upload-form">
+                <h5 class="tw-text-white tw-mb-3">
+                    <i class="fas fa-layer-group tw-mr-2 tw-text-green-400"></i>Bulk Assignment
+                </h5>
+                <p class="tw-text-gray-400 tw-mb-4">All files will be assigned to the same course, unit, and category.</p>
+                
+                <div class="row">
+                    <div class="col-md-3 tw-mb-3">
+                        <label for="bulk_course_id" class="form-label">Course</label>
+                        <select class="form-select" id="bulk_course_id" required>
+                            <option value="">Select course...</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.name }} ({{ course.prefix }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 tw-mb-3">
+                        <label for="bulk_unit_id" class="form-label">Unit</label>
+                        <select class="form-select" id="bulk_unit_id" required>
+                            <option value="">Select unit...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 tw-mb-3">
+                        <label for="bulk_category_id" class="form-label">Category</label>
+                        <select class="form-select" id="bulk_category_id" required>
+                            <option value="">Select category...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 tw-mb-3">
+                        <label for="bulk_visibility" class="form-label">Visibility</label>
+                        <select class="form-select" id="bulk_visibility">
+                            <option value="private">Private</option>
+                            <option value="public">Public</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Drop Zone -->
+            <div class="upload-section">
+                <h5 class="upload-section-title">
+                    <i class="fas fa-cloud-upload-alt"></i>Select Files
+                </h5>
+                
+                <div class="file-drop-zone" id="file-drop-zone">
+                    <div class="drop-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="drop-text">Drag and drop files here, or click to select</div>
+                    <div class="drop-subtext">Supports multiple files and folders</div>
+                    <input type="file" id="file-input" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.avi,.mp3,.wav,.zip,.rar,.js,.html,.css,.py">
+                </div>
+            </div>
+
+            <!-- File List -->
+            <div class="upload-section">
+                <h5 class="upload-section-title">
+                    <i class="fas fa-list"></i>Selected Files
+                    <span class="badge bg-primary tw-ml-2" id="file-count">0</span>
+                </h5>
+                
+                <div id="file-list-container">
+                    <p class="tw-text-gray-400 tw-text-center tw-py-4">No files selected</p>
+                </div>
+            </div>
+
+            <!-- Upload Actions -->
+            <div class="tw-flex tw-justify-between tw-items-center tw-mt-6">
+                <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left tw-mr-2"></i>Back to Dashboard
+                </a>
+                <button type="button" class="btn btn-primary btn-lg" onclick="uploadManager.uploadFiles()">
+                    <i class="fas fa-upload tw-mr-2"></i>Upload Files
+                </button>
+            </div>
+
+            <!-- Help Section -->
+            <div class="row tw-mt-6">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title tw-text-white tw-mb-3">
+                                <i class="fas fa-info-circle tw-mr-2 tw-text-blue-400"></i>Upload Modes
+                            </h6>
+                            <ul class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                                <li class="tw-mb-2">
+                                    <strong>Bulk Assign:</strong> All files get the same course, unit, and category
+                                </li>
+                                <li class="tw-mb-2">
+                                    <strong>Individual Assign:</strong> Each file can have different metadata
+                                </li>
+                                <li class="tw-mb-0">
+                                    <strong>Folder Support:</strong> Drag entire folders to preserve structure
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title tw-text-white tw-mb-3">
+                                <i class="fas fa-lightbulb tw-mr-2 tw-text-yellow-400"></i>Tips
+                            </h6>
+                            <ul class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                                <li class="tw-mb-2">
+                                    Use bulk mode for organizing related files together
+                                </li>
+                                <li class="tw-mb-2">
+                                    Individual mode is great for mixed content types
+                                </li>
+                                <li class="tw-mb-0">
+                                    Supported formats: PDF, DOC, DOCX, images, videos, archives
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+<script>
+// Initialize the batch upload manager
+let uploadManager;
+
+// Handle bulk form dynamic dropdowns
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the upload manager
+    uploadManager = new BatchUploadManager('file-drop-zone', 'file-input');
+    
+    // Make uploadManager globally accessible
+    window.uploadManager = uploadManager;
+    
+    // Update file count initially
+    updateFileCount();
+    
+    // Override the renderFileList method to update count
+    const originalRender = uploadManager.renderFileList;
+    uploadManager.renderFileList = function() {
+        originalRender.call(this);
+        updateFileCount();
+    };
+    
+    const bulkCourseSelect = document.getElementById('bulk_course_id');
+    const bulkUnitSelect = document.getElementById('bulk_unit_id');
+    const bulkCategorySelect = document.getElementById('bulk_category_id');
+    
+    if (bulkCourseSelect) {
+        bulkCourseSelect.addEventListener('change', async function() {
+            const courseId = this.value;
+            if (!courseId) {
+                bulkUnitSelect.innerHTML = '<option value="">Select unit...</option>';
+                bulkCategorySelect.innerHTML = '<option value="">Select category...</option>';
+                return;
+            }
+            
+            try {
+                // Load units
+                const unitsResponse = await fetch(`/api/courses/${courseId}/units`);
+                const units = await unitsResponse.json();
+                bulkUnitSelect.innerHTML = '<option value="">Select unit...</option>' +
+                    units.map(unit => `<option value="${unit.id}">${unit.name}</option>`).join('');
+                
+                // Load categories
+                const categoriesResponse = await fetch(`/api/courses/${courseId}/categories`);
+                const categories = await categoriesResponse.json();
+                bulkCategorySelect.innerHTML = '<option value="">Select category...</option>' +
+                    categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+                    
+            } catch (error) {
+                console.error('Failed to load course data:', error);
+            }
+        });
+    }
+    
+    if (bulkUnitSelect) {
+        bulkUnitSelect.addEventListener('change', function() {
+            // Unit change doesn't affect categories in bulk mode
+        });
+    }
+});
+
+// Update file count
+function updateFileCount() {
+    const count = uploadManager ? uploadManager.files.length : 0;
+    const badge = document.getElementById('file-count');
+    if (badge) {
+        badge.textContent = count;
+    }
+}
+</script>
+{% endblock %}

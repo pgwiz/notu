@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Search Documents - Notu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Search Header -->
+        <div class="tw-mb-6">
+            <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">
+                <i class="fas fa-search tw-mr-2 tw-text-green-400"></i>Search Documents
+            </h1>
+            <p class="tw-text-gray-400">Find documents across all courses and categories</p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="quick-search tw-mb-6 glow-effect">
+            <form method="GET" class="row g-3">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="q" 
+                           placeholder="Search documents..." 
+                           value="{{ query }}" required>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="course">
+                        <option value="">All Courses</option>
+                        {% for course in courses %}
+                        <option value="{{ course.prefix }}" {% if course_prefix == course.prefix %}selected{% endif %}>
+                            {{ course.name }} ({{ course.prefix|upper }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="category">
+                        <option value="">All Categories</option>
+                        <option value="notes" {% if category == 'notes' %}selected{% endif %}>Notes</option>
+                        <option value="assignments" {% if category == 'assignments' %}selected{% endif %}>Assignments</option>
+                        <option value="lectures" {% if category == 'lectures' %}selected{% endif %}>Lectures</option>
+                        <option value="exams" {% if category == 'exams' %}selected{% endif %}>Exams</option>
+                        <option value="projects" {% if category == 'projects' %}selected{% endif %}>Projects</option>
+                        <option value="others" {% if category == 'others' %}selected{% endif %}>Others</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Search Results -->
+        {% if query %}
+        <div class="tw-mb-6">
+            <div class="tw-flex tw-justify-between tw-items-center tw-mb-4">
+                <h2 class="tw-text-2xl tw-font-bold tw-text-white tw-mb-0">
+                    <i class="fas fa-file-alt tw-mr-2 tw-text-green-400"></i>Search Results
+                </h2>
+                <span class="badge bg-primary">{{ results|length }} documents found</span>
+            </div>
+
+            {% if results %}
+            <div class="row">
+                {% for doc in results %}
+                <div class="col-md-6 col-lg-4 tw-mb-4">
+                    <div class="card document-card h-100">
+                        <div class="card-body">
+                            <div class="tw-flex tw-items-start tw-mb-3">
+                                {% if doc.mime_type == 'application/pdf' %}
+                                <i class="fas fa-file-pdf tw-text-red-500 tw-mr-2 tw-text-xl tw-flex-shrink-0 tw-mt-1"></i>
+                                {% elif 'image' in doc.mime_type %}
+                                <i class="fas fa-file-image tw-text-blue-500 tw-mr-2 tw-text-xl tw-flex-shrink-0 tw-mt-1"></i>
+                                {% elif 'word' in doc.mime_type or 'document' in doc.mime_type %}
+                                <i class="fas fa-file-word tw-text-blue-600 tw-mr-2 tw-text-xl tw-flex-shrink-0 tw-mt-1"></i>
+                                {% elif 'sheet' in doc.mime_type %}
+                                <i class="fas fa-file-excel tw-text-green-600 tw-mr-2 tw-text-xl tw-flex-shrink-0 tw-mt-1"></i>
+                                {% elif 'presentation' in doc.mime_type %}
+                                <i class="fas fa-file-powerpoint tw-text-orange-600 tw-mr-2 tw-text-xl tw-flex-shrink-0 tw-mt-1"></i>
+                                {% else %}
+                                <i class="fas fa-file tw-text-gray-500 tw-mr-2 tw-text-xl tw-flex-shrink-0 tw-mt-1"></i>
+                                {% endif %}
+                                <h6 class="card-title tw-mb-0 tw-text-white tw-break-words tw-word-wrap tw-overflow-wrap tw-flex-1 tw-leading-tight">{{ doc.title }}</h6>
+                            </div>
+                            <p class="card-text tw-text-sm tw-text-gray-400">
+                                <i class="fas fa-graduation-cap tw-mr-1"></i>{{ doc.course.name }}<br>
+                                <i class="fas fa-folder tw-mr-1"></i>{{ doc.category|title }}<br>
+                                <i class="fas fa-calendar tw-mr-1"></i>{{ doc.created_at.strftime('%Y-%m-%d') }}<br>
+                                <i class="fas fa-hdd tw-mr-1"></i>{{ doc.file_size|filesizeformat }}
+                            </p>
+                            <div class="tw-flex tw-justify-between tw-items-center">
+                                {% if doc.visibility == 'public' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-globe tw-mr-1"></i>Public
+                                </span>
+                                {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-lock tw-mr-1"></i>Private
+                                </span>
+                                {% endif %}
+                                <div class="tw-flex tw-space-x-1">
+                                    <a href="{{ url_for('public.view_document', doc_id=doc.id) }}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye tw-mr-1"></i>View
+                                    </a>
+                                    <a href="{{ url_for('public.download_document', doc_id=doc.id) }}" class="btn btn-success btn-sm" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-body tw-text-center tw-py-8">
+                    <i class="fas fa-search tw-text-4xl tw-text-gray-500 tw-mb-3"></i>
+                    <h5 class="tw-text-gray-400">No documents found</h5>
+                    <p class="tw-text-gray-500 tw-mb-0">Try adjusting your search terms or filters.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Search Tips -->
+        <div class="platform-stats glow-effect">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-lightbulb tw-mr-2 tw-text-green-400"></i>Search Tips
+            </h3>
+            <div class="tw-space-y-3">
+                <div class="tw-flex tw-items-start">
+                    <i class="fas fa-check-circle tw-text-green-400 tw-mr-2 tw-mt-1"></i>
+                    <div>
+                        <p class="tw-text-sm tw-text-gray-300 tw-mb-0">Use specific keywords for better results</p>
+                    </div>
+                </div>
+                <div class="tw-flex tw-items-start">
+                    <i class="fas fa-check-circle tw-text-green-400 tw-mr-2 tw-mt-1"></i>
+                    <div>
+                        <p class="tw-text-sm tw-text-gray-300 tw-mb-0">Filter by course or category to narrow results</p>
+                    </div>
+                </div>
+                <div class="tw-flex tw-items-start">
+                    <i class="fas fa-check-circle tw-text-green-400 tw-mr-2 tw-mt-1"></i>
+                    <div>
+                        <p class="tw-text-sm tw-text-gray-300 tw-mb-0">Search works on document titles and filenames</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-search glow-effect">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-bolt tw-mr-2 tw-text-green-400"></i>Quick Actions
+            </h3>
+            <div class="tw-space-y-3">
+                <a href="{{ url_for('public.courses') }}" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-graduation-cap tw-mr-2"></i>Browse Courses
+                </a>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('user.upload') }}" class="btn btn-outline-success w-100">
+                    <i class="fas fa-upload tw-mr-2"></i>Upload Document
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

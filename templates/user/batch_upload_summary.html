@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Batch Upload Summary - Notu{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Batch Upload Summary Header -->
+        <div class="tw-mb-6">
+            <div class="tw-flex tw-items-center tw-mb-4">
+                <div class="tw-bg-green-500 tw-rounded-full tw-p-3 tw-mr-4">
+                    <i class="fas fa-check tw-text-white tw-text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">Batch Upload Complete!</h1>
+                    <p class="tw-text-gray-400">{{ successful_uploads }} of {{ total_files }} files uploaded successfully.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Results Summary -->
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-chart-bar tw-mr-2 tw-text-blue-500"></i>Upload Results Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 tw-mb-3">
+                        <div class="tw-text-center tw-p-4 tw-bg-gray-900 tw-rounded">
+                            <div class="tw-text-2xl tw-font-bold tw-text-green-400">{{ successful_uploads }}</div>
+                            <div class="tw-text-sm tw-text-gray-400">Successful</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 tw-mb-3">
+                        <div class="tw-text-center tw-p-4 tw-bg-gray-900 tw-rounded">
+                            <div class="tw-text-2xl tw-font-bold tw-text-red-400">{{ failed_uploads }}</div>
+                            <div class="tw-text-sm tw-text-gray-400">Failed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 tw-mb-3">
+                        <div class="tw-text-center tw-p-4 tw-bg-gray-900 tw-rounded">
+                            <div class="tw-text-2xl tw-font-bold tw-text-blue-400">{{ total_size|filesizeformat }}</div>
+                            <div class="tw-text-sm tw-text-gray-400">Total Size</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 tw-mb-3">
+                        <div class="tw-text-center tw-p-4 tw-bg-gray-900 tw-rounded">
+                            <div class="tw-text-2xl tw-font-bold tw-text-yellow-400">{{ upload_mode|title }}</div>
+                            <div class="tw-text-sm tw-text-gray-400">Upload Mode</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Results -->
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-list tw-mr-2 tw-text-green-500"></i>Detailed Results
+                </h5>
+            </div>
+            <div class="card-body tw-p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark tw-mb-0">
+                        <thead class="tw-bg-gray-900">
+                            <tr>
+                                <th class="tw-border-gray-700">File</th>
+                                <th class="tw-border-gray-700">Status</th>
+                                <th class="tw-border-gray-700">Size</th>
+                                <th class="tw-border-gray-700">Course</th>
+                                <th class="tw-border-gray-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                            <tr class="tw-border-gray-700">
+                                <td>
+                                    <div class="tw-flex tw-items-center">
+                                        {% if result.success %}
+                                            <i class="fas fa-file tw-text-blue-500 tw-mr-2"></i>
+                                        {% else %}
+                                            <i class="fas fa-file tw-text-red-500 tw-mr-2"></i>
+                                        {% endif %}
+                                        <span class="tw-text-sm">{{ result.filename }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if result.success %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check tw-mr-1"></i>Success
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times tw-mr-1"></i>Failed
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if result.success and result.document_id %}
+                                        {% set doc = documents[result.document_id] %}
+                                        {{ doc.file_size|filesizeformat }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if result.success and result.document_id %}
+                                        {% set doc = documents[result.document_id] %}
+                                        {{ doc.course.prefix|upper }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if result.success and result.document_id %}
+                                        <div class="tw-flex tw-gap-2">
+                                            <a href="{{ url_for('public.view_document', doc_id=result.document_id) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('user.upload_summary', doc_id=result.document_id) }}" 
+                                               class="btn btn-sm btn-outline-info" title="Summary">
+                                                <i class="fas fa-info-circle"></i>
+                                            </a>
+                                        </div>
+                                    {% else %}
+                                        <span class="tw-text-gray-500 tw-text-sm">{{ result.error or 'Upload failed' }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storage Information (Admin Only) -->
+        {% if current_user.is_admin() and successful_uploads > 0 %}
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-server tw-mr-2 tw-text-green-500"></i>Storage Information
+                    <span class="badge bg-info tw-ml-2">Admin View</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-database tw-mr-2"></i><strong>Storage Backend:</strong>
+                        </p>
+                        <p class="tw-text-white">
+                            {% if storage_backend == 'local' %}
+                                <i class="fas fa-hdd tw-mr-1 tw-text-blue-500"></i>Local Storage
+                            {% elif storage_backend == 's3' %}
+                                <i class="fas fa-cloud tw-mr-1 tw-text-green-500"></i>S3 Storage
+                            {% else %}
+                                {{ storage_backend|title }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-folder tw-mr-2"></i><strong>Storage Root:</strong>
+                        </p>
+                        <div class="tw-bg-gray-900 tw-p-3 tw-rounded tw-border">
+                            <code class="tw-text-green-400 tw-text-sm tw-break-all">
+                                {% if storage_backend == 'local' %}
+                                    {{ storage_root_path }}
+                                {% elif storage_backend == 's3' %}
+                                    s3://{{ s3_bucket_name }}/notu/
+                                {% else %}
+                                    {{ storage_backend }}://
+                                {% endif %}
+                            </code>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sample Storage Paths -->
+                <div class="tw-mt-4">
+                    <p class="tw-text-sm tw-text-gray-400 tw-mb-2">
+                        <i class="fas fa-map-marker-alt tw-mr-2"></i><strong>Sample Storage Paths:</strong>
+                    </p>
+                    <div class="tw-bg-gray-900 tw-p-4 tw-rounded tw-border tw-max-h-48 tw-overflow-y-auto">
+                        {% for result in results %}
+                            {% if result.success and result.storage_key %}
+                                <div class="tw-mb-2 tw-pb-2 tw-border-b tw-border-gray-700 last:tw-border-b-0">
+                                    <div class="tw-text-xs tw-text-gray-500 tw-mb-1">{{ result.filename }}</div>
+                                    <code class="tw-text-yellow-400 tw-text-xs tw-break-all">
+                                        {% if storage_backend == 'local' %}
+                                            {{ storage_root_path }}/{{ result.storage_key }}
+                                        {% elif storage_backend == 's3' %}
+                                            s3://{{ s3_bucket_name }}/notu/{{ result.storage_key }}
+                                        {% else %}
+                                            {{ storage_backend }}://{{ result.storage_key }}
+                                        {% endif %}
+                                    </code>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="tw-flex tw-flex-col sm:tw-flex-row tw-gap-3 tw-justify-center">
+            <a href="{{ url_for('user.batch_upload') }}" 
+               class="btn btn-primary tw-flex tw-items-center tw-justify-center">
+                <i class="fas fa-upload tw-mr-2"></i>Upload More Files
+            </a>
+            <a href="{{ url_for('user.documents') }}" 
+               class="btn btn-outline-primary tw-flex tw-items-center tw-justify-center">
+                <i class="fas fa-folder tw-mr-2"></i>My Documents
+            </a>
+            <a href="{{ url_for('user.dashboard') }}" 
+               class="btn btn-outline-secondary tw-flex tw-items-center tw-justify-center">
+                <i class="fas fa-tachometer-alt tw-mr-2"></i>Dashboard
+            </a>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="tw-mt-6 tw-text-center">
+            <p class="tw-text-sm tw-text-gray-500">
+                <i class="fas fa-info-circle tw-mr-1"></i>
+                Upload completed at {{ upload_time.strftime('%B %d, %Y at %I:%M %p') }}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

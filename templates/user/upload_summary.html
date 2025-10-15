@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Summary - Notu{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Upload Summary Header -->
+        <div class="tw-mb-6">
+            <div class="tw-flex tw-items-center tw-mb-4">
+                <div class="tw-bg-green-500 tw-rounded-full tw-p-3 tw-mr-4">
+                    <i class="fas fa-check tw-text-white tw-text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">Upload Successful!</h1>
+                    <p class="tw-text-gray-400">Your file has been uploaded and processed successfully.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Information -->
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-file tw-mr-2 tw-text-blue-500"></i>Document Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-heading tw-mr-2"></i><strong>Title:</strong>
+                        </p>
+                        <p class="tw-text-white">{{ document.title }}</p>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-file tw-mr-2"></i><strong>Original Filename:</strong>
+                        </p>
+                        <p class="tw-text-white">{{ document.original_filename }}</p>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-graduation-cap tw-mr-2"></i><strong>Course:</strong>
+                        </p>
+                        <p class="tw-text-white">{{ document.course.name }} ({{ document.course.prefix|upper }})</p>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-folder tw-mr-2"></i><strong>Category:</strong>
+                        </p>
+                        <p class="tw-text-white">{{ document.category_obj.name if document.category_obj else 'Unknown' }}</p>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-hdd tw-mr-2"></i><strong>File Size:</strong>
+                        </p>
+                        <p class="tw-text-white">{{ document.file_size|filesizeformat }}</p>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-eye tw-mr-2"></i><strong>Visibility:</strong>
+                        </p>
+                        {% if document.visibility == 'public' %}
+                        <span class="badge bg-success">Public</span>
+                        {% else %}
+                        <span class="badge bg-warning">Private</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storage Information (Admin Only) -->
+        {% if current_user.is_admin() %}
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-server tw-mr-2 tw-text-green-500"></i>Storage Information
+                    <span class="badge bg-info tw-ml-2">Admin View</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-database tw-mr-2"></i><strong>Storage Backend:</strong>
+                        </p>
+                        <p class="tw-text-white">
+                            {% if document.storage_backend == 'local' %}
+                                <i class="fas fa-hdd tw-mr-1 tw-text-blue-500"></i>Local Storage
+                            {% elif document.storage_backend == 's3' %}
+                                <i class="fas fa-cloud tw-mr-1 tw-text-green-500"></i>S3 Storage
+                            {% else %}
+                                {{ document.storage_backend|title }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-key tw-mr-2"></i><strong>Storage Key:</strong>
+                        </p>
+                        <div class="tw-bg-gray-900 tw-p-3 tw-rounded tw-border">
+                            <code class="tw-text-green-400 tw-text-sm tw-break-all">{{ document.storage_key }}</code>
+                        </div>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-shield-alt tw-mr-2"></i><strong>Checksum:</strong>
+                        </p>
+                        <div class="tw-bg-gray-900 tw-p-3 tw-rounded tw-border">
+                            <code class="tw-text-blue-400 tw-text-xs tw-break-all">{{ document.checksum }}</code>
+                        </div>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-tag tw-mr-2"></i><strong>MIME Type:</strong>
+                        </p>
+                        <p class="tw-text-white">{{ document.mime_type }}</p>
+                    </div>
+                </div>
+                
+                <!-- Full Storage Path -->
+                <div class="tw-mt-4">
+                    <p class="tw-text-sm tw-text-gray-400 tw-mb-2">
+                        <i class="fas fa-map-marker-alt tw-mr-2"></i><strong>Full Storage Path:</strong>
+                    </p>
+                    <div class="tw-bg-gray-900 tw-p-4 tw-rounded tw-border">
+                        <code class="tw-text-yellow-400 tw-text-sm tw-break-all">
+                            {% if document.storage_backend == 'local' %}
+                                {{ storage_root_path }}/{{ document.storage_key }}
+                            {% elif document.storage_backend == 's3' %}
+                                s3://{{ s3_bucket_name }}/notu/{{ document.storage_key }}
+                            {% else %}
+                                {{ document.storage_backend }}://{{ document.storage_key }}
+                            {% endif %}
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="tw-flex tw-flex-col sm:tw-flex-row tw-gap-3 tw-justify-center">
+            <a href="{{ url_for('public.view_document', doc_id=document.id) }}" 
+               class="btn btn-primary tw-flex tw-items-center tw-justify-center">
+                <i class="fas fa-eye tw-mr-2"></i>View Document
+            </a>
+            <a href="{{ url_for('public.download_document', doc_id=document.id) }}" 
+               class="btn btn-success tw-flex tw-items-center tw-justify-center">
+                <i class="fas fa-download tw-mr-2"></i>Download
+            </a>
+            <a href="{{ url_for('user.upload') }}" 
+               class="btn btn-outline-primary tw-flex tw-items-center tw-justify-center">
+                <i class="fas fa-upload tw-mr-2"></i>Upload Another
+            </a>
+            <a href="{{ url_for('user.dashboard') }}" 
+               class="btn btn-outline-secondary tw-flex tw-items-center tw-justify-center">
+                <i class="fas fa-tachometer-alt tw-mr-2"></i>Dashboard
+            </a>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="tw-mt-6 tw-text-center">
+            <p class="tw-text-sm tw-text-gray-500">
+                <i class="fas fa-info-circle tw-mr-1"></i>
+                Document ID: {{ document.id }} | Uploaded: {{ document.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

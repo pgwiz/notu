@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: notu_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: notu
+      MYSQL_USER: notu
+      MYSQL_PASSWORD: notu123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql_init:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - notu_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: notu_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - notu_network
+
+  app:
+    build: .
+    container_name: notu_app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=notu
+      - MYSQL_PASSWORD=notu123
+      - MYSQL_DATABASE=notu
+      - SECRET_KEY=your-production-secret-key-change-this
+      # Scaleway Object Storage (uncomment and configure)
+      # - S3_BUCKET_NAME=your-scaleway-bucket
+      # - S3_REGION=fr-par
+      # - S3_ENDPOINT_URL=https://s3.fr-par.scw.cloud
+      # - AWS_ACCESS_KEY_ID=your-scaleway-access-key
+      # - AWS_SECRET_ACCESS_KEY=your-scaleway-secret-key
+      # - ACTIVE_STORAGE_BACKEND=s3
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      - mysql
+    networks:
+      - notu_network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  notu_network:
+    driver: bridge

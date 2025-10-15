@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Storage Synchronization - Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="tw-mb-6">
+            <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">
+                <i class="fas fa-sync tw-mr-2 tw-text-green-400"></i>Storage Synchronization
+            </h1>
+            <p class="tw-text-gray-400">Synchronize files between storage backends.</p>
+        </div>
+        
+        <!-- Sync Operations -->
+        <div class="card tw-mb-6">
+            <div class="card-header">
+                <h5 class="tw-mb-0">
+                    <i class="fas fa-exchange-alt tw-mr-2 tw-text-green-400"></i>Synchronization Operations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 tw-mb-4">
+                        <div class="card tw-bg-gray-700">
+                            <div class="card-body tw-text-center">
+                                <i class="fas fa-eye tw-text-3xl tw-text-blue-400 tw-mb-3"></i>
+                                <h6 class="tw-text-white tw-mb-2">Dry Run</h6>
+                                <p class="tw-text-sm tw-text-gray-400 tw-mb-3">
+                                    Preview what will be synchronized without making changes
+                                </p>
+                                <form method="POST" action="{{ url_for('admin.run_sync') }}" class="d-inline">
+                                    <input type="hidden" name="dry_run" value="true">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye tw-mr-1"></i>Run Dry Run
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 tw-mb-4">
+                        <div class="card tw-bg-gray-700">
+                            <div class="card-body tw-text-center">
+                                <i class="fas fa-sync tw-text-3xl tw-text-green-400 tw-mb-3"></i>
+                                <h6 class="tw-text-white tw-mb-2">Full Sync</h6>
+                                <p class="tw-text-sm tw-text-gray-400 tw-mb-3">
+                                    Synchronize all files between storage backends
+                                </p>
+                                <form method="POST" action="{{ url_for('admin.run_sync') }}" class="d-inline">
+                                    <input type="hidden" name="dry_run" value="false">
+                                    <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Are you sure you want to run a full sync? This will modify files in both storage backends.')">
+                                        <i class="fas fa-sync tw-mr-1"></i>Run Full Sync
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sync Status -->
+        <div class="card tw-mb-6">
+            <div class="card-header">
+                <h5 class="tw-mb-0">
+                    <i class="fas fa-info-circle tw-mr-2 tw-text-blue-400"></i>Sync Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 tw-mb-3">
+                        <div class="tw-text-center">
+                            <div class="tw-text-2xl tw-font-bold tw-text-white">0</div>
+                            <div class="tw-text-sm tw-text-gray-400">Files Copied</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 tw-mb-3">
+                        <div class="tw-text-center">
+                            <div class="tw-text-2xl tw-font-bold tw-text-white">0</div>
+                            <div class="tw-text-sm tw-text-gray-400">Files Updated</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 tw-mb-3">
+                        <div class="tw-text-center">
+                            <div class="tw-text-2xl tw-font-bold tw-text-white">0</div>
+                            <div class="tw-text-sm tw-text-gray-400">Conflicts</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tw-mt-4">
+                    <div class="alert alert-info tw-mb-0">
+                        <i class="fas fa-info-circle tw-mr-2"></i>
+                        No sync operations have been run yet. Use the buttons above to start synchronization.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sync Logs -->
+        <div class="card tw-mb-6">
+            <div class="card-header">
+                <h5 class="tw-mb-0">
+                    <i class="fas fa-list tw-mr-2 tw-text-green-400"></i>Sync Logs
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="tw-text-center tw-py-8">
+                    <i class="fas fa-list tw-text-4xl tw-text-gray-500 tw-mb-3"></i>
+                    <h5 class="tw-text-gray-400 tw-mb-3">No sync logs yet</h5>
+                    <p class="tw-text-gray-500 tw-mb-0">Sync logs will appear here after running synchronization operations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Sync Information -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-info-circle tw-mr-2 tw-text-green-400"></i>Sync Information
+            </h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="tw-mb-3">
+                        <h6 class="tw-text-white tw-mb-2">What is Synchronization?</h6>
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            Synchronization ensures that files in both storage backends are identical and up-to-date.
+                        </p>
+                    </div>
+                    
+                    <div class="tw-mb-3">
+                        <h6 class="tw-text-white tw-mb-2">Dry Run</h6>
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            Preview changes without modifying any files. Safe to run multiple times.
+                        </p>
+                    </div>
+                    
+                    <div class="tw-mb-0">
+                        <h6 class="tw-text-white tw-mb-2">Full Sync</h6>
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            Actually synchronize files between backends. This will modify files.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sync Tips -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-lightbulb tw-mr-2 tw-text-green-400"></i>Sync Tips
+            </h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="tw-mb-3">
+                        <h6 class="tw-text-white tw-mb-2">Always Run Dry Run First</h6>
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            Check what will be changed before running a full sync.
+                        </p>
+                    </div>
+                    
+                    <div class="tw-mb-3">
+                        <h6 class="tw-text-white tw-mb-2">Monitor Conflicts</h6>
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            Conflicts occur when the same file exists in both backends with different content.
+                        </p>
+                    </div>
+                    
+                    <div class="tw-mb-0">
+                        <h6 class="tw-text-white tw-mb-2">Backup Important Data</h6>
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            Always backup important data before running synchronization operations.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-bolt tw-mr-2 tw-text-green-400"></i>Quick Actions
+            </h3>
+            <div class="list-group">
+                <a href="{{ url_for('admin.storage') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-hdd tw-mr-2 tw-text-green-400"></i>
+                    Storage Management
+                </a>
+                <a href="{{ url_for('admin.settings') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-cog tw-mr-2 tw-text-green-400"></i>
+                    System Settings
+                </a>
+                <a href="{{ url_for('admin.audit_logs') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-history tw-mr-2 tw-text-green-400"></i>
+                    Audit Logs
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

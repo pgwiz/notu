@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}My Documents - Notu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Header Section -->
+        <div class="tw-mb-6">
+            <div class="tw-flex tw-justify-between tw-items-center tw-mb-4">
+                <div>
+                    <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">
+                        <i class="fas fa-folder tw-mr-3 tw-text-green-400"></i>My Documents
+                    </h1>
+                    <p class="tw-text-gray-400">Manage and organize your uploaded documents.</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('user.upload') }}" class="btn btn-primary">
+                        <i class="fas fa-upload tw-mr-2"></i>Upload New Document
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="futuristic-card glow-effect tw-mb-6">
+            <div class="card-header">
+                <h5 class="tw-mb-0">
+                    <i class="fas fa-filter tw-mr-2 tw-text-green-400"></i>Filter Documents
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="course_id" class="form-label">Course</label>
+                        <select class="form-select" id="course_id" name="course_id">
+                            <option value="">All Courses</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}" {% if current_course_id == course.id %}selected{% endif %}>
+                                {{ course.name }} ({{ course.prefix }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">All Categories</option>
+                            <option value="notes" {% if current_category == 'notes' %}selected{% endif %}>Notes</option>
+                            <option value="assignments" {% if current_category == 'assignments' %}selected{% endif %}>Assignments</option>
+                            <option value="lectures" {% if current_category == 'lectures' %}selected{% endif %}>Lectures</option>
+                            <option value="exams" {% if current_category == 'exams' %}selected{% endif %}>Exams</option>
+                            <option value="projects" {% if current_category == 'projects' %}selected{% endif %}>Projects</option>
+                            <option value="others" {% if current_category == 'others' %}selected{% endif %}>Others</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="visibility" class="form-label">Visibility</label>
+                        <select class="form-select" id="visibility" name="visibility">
+                            <option value="">All Visibility</option>
+                            <option value="public" {% if current_visibility == 'public' %}selected{% endif %}>Public</option>
+                            <option value="private" {% if current_visibility == 'private' %}selected{% endif %}>Private</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 tw-flex tw-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search tw-mr-2"></i>Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Documents List -->
+        <div class="futuristic-card glow-effect">
+            <div class="card-header">
+                <h5 class="tw-mb-0">
+                    <i class="fas fa-list tw-mr-2 tw-text-green-400"></i>Documents
+                    <span class="badge bg-primary tw-ml-2">{{ documents.total }} total</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if documents.items %}
+                    <div class="row">
+                        {% for doc in documents.items %}
+                        <div class="col-md-6 col-lg-4 tw-mb-4">
+                            <div class="card document-card h-100">
+                                <div class="card-body">
+                                    <div class="tw-flex tw-items-start tw-mb-3">
+                                        <i class="fas fa-file-pdf tw-text-red-500 tw-mr-2 tw-text-xl tw-flex-shrink-0"></i>
+                                        <h6 class="card-title tw-mb-0 tw-text-white tw-break-words tw-leading-tight">{{ doc.title }}</h6>
+                                    </div>
+                                    <p class="card-text tw-text-sm tw-text-gray-400">
+                                        <i class="fas fa-graduation-cap tw-mr-1"></i>{{ doc.course.name }}<br>
+                                        <i class="fas fa-folder tw-mr-1"></i>{{ doc.category_obj.name|title }}<br>
+                                        <i class="fas fa-calendar tw-mr-1"></i>{{ doc.created_at.strftime('%Y-%m-%d') }}<br>
+                                        <i class="fas fa-hdd tw-mr-1"></i>{{ doc.file_size|filesizeformat }}
+                                    </p>
+                                    <div class="tw-flex tw-justify-between tw-items-center tw-mb-3">
+                                        <span class="badge badge-{{ 'success' if doc.visibility == 'public' else 'warning' }}">
+                                            <i class="fas fa-{{ 'globe' if doc.visibility == 'public' else 'lock' }} tw-mr-1"></i>
+                                            {{ doc.visibility|title }}
+                                        </span>
+                                        <small class="text-muted">{{ doc.original_filename }}</small>
+                                    </div>
+                                    <div class="btn-group w-100" role="group">
+                                        <a href="{{ url_for('public.view_document', doc_id=doc.id) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('user.edit_document', doc_id=doc.id) }}" 
+                                           class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                onclick="confirmDelete('{{ doc.id }}', '{{ doc.title }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if documents.pages > 1 %}
+                    <nav aria-label="Documents pagination" class="tw-mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if documents.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('user.documents', page=documents.prev_num, course_id=current_course_id, category=current_category, visibility=current_visibility) }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in documents.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != documents.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('user.documents', page=page_num, course_id=current_course_id, category=current_category, visibility=current_visibility) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if documents.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('user.documents', page=documents.next_num, course_id=current_course_id, category=current_category, visibility=current_visibility) }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                {% else %}
+                    <div class="tw-text-center tw-py-8">
+                        <i class="fas fa-folder-open tw-text-6xl tw-text-gray-600 tw-mb-4"></i>
+                        <h4 class="tw-text-white tw-mb-2">No documents found</h4>
+                        <p class="tw-text-gray-400 tw-mb-4">
+                            {% if current_course_id or current_category or current_visibility %}
+                                Try adjusting your filters or
+                            {% endif %}
+                            Upload your first document to get started.
+                        </p>
+                        <a href="{{ url_for('user.upload') }}" class="btn btn-primary">
+                            <i class="fas fa-upload tw-mr-2"></i>Upload Document
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content futuristic-card">
+            <div class="modal-header">
+                <h5 class="modal-title tw-text-white">
+                    <i class="fas fa-exclamation-triangle tw-mr-2 tw-text-red-400"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="tw-text-white">Are you sure you want to delete this document?</p>
+                <div class="tw-bg-gray-800 tw-p-3 tw-rounded tw-mt-3">
+                    <div class="tw-text-gray-400 tw-text-sm">Document:</div>
+                    <div class="tw-text-white tw-font-medium" id="delete-doc-title"></div>
+                </div>
+                <div class="tw-text-red-400 tw-text-sm tw-mt-2">
+                    <i class="fas fa-warning tw-mr-1"></i>This action cannot be undone!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('user.delete_document', doc_id=0) }}" style="display: inline;" id="delete-form">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash tw-mr-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function confirmDelete(docId, docTitle) {
+    document.getElementById('delete-doc-title').textContent = docTitle;
+    
+    // Update the form action with the correct document ID
+    const form = document.getElementById('delete-form');
+    form.action = form.action.replace('/0', '/' + docId);
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+// Initialize text wrapping for document titles
+document.addEventListener('DOMContentLoaded', function() {
+    // Process all card titles to improve text wrapping
+    const cardTitles = document.querySelectorAll('.card-title');
+    
+    cardTitles.forEach(title => {
+        // Add zero-width space after underscores to allow breaking
+        const originalText = title.textContent;
+        const processedText = originalText
+            .replace(/_/g, '_\u200B') // Add zero-width space after underscores
+            .replace(/([A-Z])([A-Z])/g, '$1\u200B$2') // Add break between consecutive capitals
+            .replace(/([a-z])([A-Z])/g, '$1\u200B$2'); // Add break between camelCase
+        
+        title.textContent = processedText;
+        title.classList.add('text-wrap-enhanced');
+    });
+});
+</script>
+{% endblock %}
+

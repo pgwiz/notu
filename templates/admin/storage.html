@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Storage Management - Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="tw-mb-6">
+            <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">
+                <i class="fas fa-hdd tw-mr-2 tw-text-green-400"></i>Storage Management
+            </h1>
+            <p class="tw-text-gray-400">Manage storage backends and synchronization.</p>
+        </div>
+        
+        <!-- Current Storage Backend -->
+        <div class="card tw-mb-6">
+            <div class="card-header">
+                <h5 class="tw-mb-0">
+                    <i class="fas fa-server tw-mr-2 tw-text-green-400"></i>Current Storage Backend
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tw-mb-3">
+                            <label class="form-label">Active Backend</label>
+                            <div class="tw-flex tw-items-center">
+                                <span class="badge badge-success tw-mr-2">{{ active_backend|title }}</span>
+                                <span class="tw-text-gray-400">Currently in use</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="tw-mb-3">
+                            <label class="form-label">Total Files</label>
+                            <div class="tw-text-2xl tw-font-bold tw-text-white">{{ local_stats.total_files + s3_stats.total_files }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Storage Backend Selection -->
+        <div class="card tw-mb-6">
+            <div class="card-header">
+                <h5 class="tw-mb-0">
+                    <i class="fas fa-exchange-alt tw-mr-2 tw-text-green-400"></i>Switch Storage Backend
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.switch_storage') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="old_backend" value="{{ active_backend }}">
+                    
+                    <div class="row">
+                        <div class="col-md-6 tw-mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="backend" id="local" value="local" {% if active_backend == 'local' %}checked{% endif %}>
+                                <label class="form-check-label" for="local">
+                                    <strong>Local Storage</strong>
+                                    <div class="tw-text-sm tw-text-gray-400">
+                                        Files stored on local filesystem
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 tw-mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="backend" id="s3" value="s3" {% if active_backend == 's3' %}checked{% endif %}>
+                                <label class="form-check-label" for="s3">
+                                    <strong>S3 Storage</strong>
+                                    <div class="tw-text-sm tw-text-gray-400">
+                                        Files stored in cloud storage
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tw-mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save tw-mr-2"></i>Switch Backend
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Storage Statistics -->
+        <div class="row tw-mb-6">
+            <div class="col-md-6 tw-mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="tw-mb-0">
+                            <i class="fas fa-folder tw-mr-2 tw-text-blue-400"></i>Local Storage
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="tw-mb-3">
+                            <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                                <span class="tw-text-sm tw-text-gray-400">Files</span>
+                                <span class="tw-text-sm tw-text-white">{{ local_stats.total_files }}</span>
+                            </div>
+                        </div>
+                        <div class="tw-mb-3">
+                            <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                                <span class="tw-text-sm tw-text-gray-400">Size</span>
+                                <span class="tw-text-sm tw-text-white">{{ (local_stats.total_size / (1024*1024))|round(2) }} MB</span>
+                            </div>
+                        </div>
+                        <div class="tw-mb-0">
+                            <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                                <span class="tw-text-sm tw-text-gray-400">Status</span>
+                                <span class="badge badge-success">Available</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 tw-mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="tw-mb-0">
+                            <i class="fas fa-cloud tw-mr-2 tw-text-blue-400"></i>S3 Storage
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="tw-mb-3">
+                            <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                                <span class="tw-text-sm tw-text-gray-400">Files</span>
+                                <span class="tw-text-sm tw-text-white">{{ s3_stats.total_files }}</span>
+                            </div>
+                        </div>
+                        <div class="tw-mb-3">
+                            <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                                <span class="tw-text-sm tw-text-gray-400">Size</span>
+                                <span class="tw-text-sm tw-text-white">{{ (s3_stats.total_size / (1024*1024))|round(2) }} MB</span>
+                            </div>
+                        </div>
+                        <div class="tw-mb-3">
+                            <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                                <span class="tw-text-sm tw-text-gray-400">Status</span>
+                                {% if s3_stats.total_files >= 0 %}
+                                <span class="badge badge-success">Available</span>
+                                {% else %}
+                                <span class="badge badge-warning">Not Configured</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if current_app.config.get('S3_ENDPOINT_URL') %}
+                        <div class="tw-mb-0">
+                            <div class="tw-flex tw-justify-between tw-items-center tw-mb-1">
+                                <span class="tw-text-sm tw-text-gray-400">Endpoint</span>
+                                <span class="tw-text-sm tw-text-white">{{ current_app.config.get('S3_ENDPOINT_URL') }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Sync Operations -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-sync tw-mr-2 tw-text-green-400"></i>Synchronization
+            </h3>
+            <div class="card">
+                <div class="card-body">
+                    <p class="tw-text-sm tw-text-gray-400 tw-mb-4">
+                        Synchronize files between storage backends to ensure consistency.
+                    </p>
+                    
+                    <div class="tw-mb-4">
+                        <a href="{{ url_for('admin.sync') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-sync tw-mr-2"></i>Run Sync
+                        </a>
+                    </div>
+                    
+                    <div class="tw-mb-0">
+                        <a href="{{ url_for('admin.sync') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-eye tw-mr-2"></i>View Sync Status
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Storage Tips -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-lightbulb tw-mr-2 tw-text-green-400"></i>Storage Tips
+            </h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="tw-mb-3">
+                        <h6 class="tw-text-white tw-mb-2">Local Storage</h6>
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            Best for development and small deployments. Files are stored on the server's filesystem.
+                        </p>
+                    </div>
+                    
+                    <div class="tw-mb-3">
+                        <h6 class="tw-text-white tw-mb-2">S3 Storage</h6>
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            Best for production deployments. Provides scalability, durability, and global access.
+                        </p>
+                    </div>
+                    
+                    <div class="tw-mb-0">
+                        <h6 class="tw-text-white tw-mb-2">Synchronization</h6>
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                            Use sync to migrate between backends or maintain consistency across multiple storage systems.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="tw-mb-6">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-bolt tw-mr-2 tw-text-green-400"></i>Quick Actions
+            </h3>
+            <div class="list-group">
+                <a href="{{ url_for('admin.sync') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-sync tw-mr-2 tw-text-green-400"></i>
+                    Run Full Sync
+                </a>
+                <a href="{{ url_for('admin.sync') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-eye tw-mr-2 tw-text-green-400"></i>
+                    View Sync Report
+                </a>
+                <a href="{{ url_for('admin.settings') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-cog tw-mr-2 tw-text-green-400"></i>
+                    Storage Settings
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

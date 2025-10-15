@@ -1,0 +1,613 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.title }} - Notu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Document Header -->
+        <div class="tw-mb-6">
+            <div class="tw-flex tw-justify-between tw-items-start tw-mb-4">
+                <div>
+                    <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">
+                        {% if document.mime_type == 'application/pdf' %}
+                        <i class="fas fa-file-pdf tw-mr-2 tw-text-red-500"></i>
+                        {% elif 'image' in document.mime_type %}
+                        <i class="fas fa-file-image tw-mr-2 tw-text-blue-500"></i>
+                        {% elif 'word' in document.mime_type or 'document' in document.mime_type %}
+                        <i class="fas fa-file-word tw-mr-2 tw-text-blue-600"></i>
+                        {% elif 'sheet' in document.mime_type %}
+                        <i class="fas fa-file-excel tw-mr-2 tw-text-green-600"></i>
+                        {% elif 'presentation' in document.mime_type %}
+                        <i class="fas fa-file-powerpoint tw-mr-2 tw-text-orange-600"></i>
+                        {% else %}
+                        <i class="fas fa-file tw-mr-2 tw-text-gray-500"></i>
+                        {% endif %}
+                        {{ document.title }}
+                    </h1>
+                    <p class="tw-text-gray-400">{{ document.course.name }} ({{ document.course.prefix|upper }})</p>
+                </div>
+                <div class="tw-flex tw-flex-col xs:tw-flex-row tw-gap-2 tw-space-x-0 xs:tw-space-x-2 tw-w-full sm:tw-w-auto">
+                    <a href="{{ url_for('public.download_document', doc_id=document.id) }}" 
+                       class="btn btn-success tw-w-full xs:tw-w-auto tw-text-sm sm:tw-text-base" title="Download Document">
+                        <i class="fas fa-download tw-mr-1"></i><span class="tw-hidden xs:tw-inline">Download</span><span class="xs:tw-hidden">DL</span>
+                    </a>
+                    {% if current_user.is_authenticated and (current_user.id == document.owner_id or current_user.role == 'admin') %}
+                    <button type="button" class="btn btn-danger tw-w-full xs:tw-w-auto tw-text-sm sm:tw-text-base" 
+                            onclick="confirmDelete({{ document.id }}, '{{ document.title }}')" 
+                            title="Delete Document">
+                        <i class="fas fa-trash tw-mr-1"></i><span class="tw-hidden xs:tw-inline">Delete</span><span class="xs:tw-hidden">DEL</span>
+                    </button>
+                    {% endif %}
+                    <a href="{{ url_for('public.course_overview', prefix=document.course.prefix) }}" 
+                       class="btn btn-outline-primary tw-w-full xs:tw-w-auto tw-text-sm sm:tw-text-base" title="Back to Course">
+                        <i class="fas fa-arrow-left tw-mr-1"></i><span class="tw-hidden xs:tw-inline">Back</span><span class="xs:tw-hidden">←</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Document Info -->
+            <div class="card tw-mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 tw-mb-3 md:tw-mb-0">
+                            <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                                <i class="fas fa-folder tw-mr-2"></i><strong>Category:</strong> {{ document.category_obj.name if document.category_obj else 'Unknown' }}
+                            </p>
+                            <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                                <i class="fas fa-hdd tw-mr-2"></i><strong>File Size:</strong> {{ document.file_size|filesizeformat }}
+                            </p>
+                            <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                                <i class="fas fa-calendar tw-mr-2"></i><strong>Uploaded:</strong> {{ document.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                                <i class="fas fa-user tw-mr-2"></i><strong>Uploaded by:</strong> {{ document.owner.email }}
+                            </p>
+                            <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                                <i class="fas fa-file tw-mr-2"></i><strong>Original File:</strong> {{ document.original_filename }}
+                            </p>
+                            <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                                <i class="fas fa-eye tw-mr-2"></i><strong>Visibility:</strong> 
+                                {% if document.visibility == 'public' %}
+                                <span class="badge bg-success">Public</span>
+                                {% else %}
+                                <span class="badge bg-warning">Private</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Viewer -->
+        <div class="document-viewer">
+            {% if document.mime_type == 'application/pdf' %}
+            <!-- PDF Viewer -->
+            <div class="card">
+                <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                    <h5 class="tw-mb-0 tw-text-white">
+                        <i class="fas fa-file-pdf tw-mr-2 tw-text-red-500"></i>PDF Viewer
+                    </h5>
+                </div>
+                <div class="card-body tw-p-0">
+                    <div id="pdf-viewer" class="tw-w-full tw-h-96 sm:tw-h-[600px] tw-bg-gray-100 tw-flex tw-items-center tw-justify-center">
+                        <div class="tw-text-center">
+                            <div class="tw-spinner-border tw-text-primary tw-mb-3" role="status">
+                                <span class="tw-sr-only">Loading PDF...</span>
+                            </div>
+                            <p class="tw-text-gray-600">Loading PDF...</p>
+                        </div>
+                    </div>
+                    <div class="tw-p-3 tw-bg-gray-800 tw-border-t tw-border-gray-700">
+                        <div class="tw-flex tw-justify-between tw-items-center">
+                            <div class="tw-flex tw-space-x-2">
+                                <button id="prev-page" class="btn btn-sm btn-outline-light" disabled>
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </button>
+                                <button id="next-page" class="btn btn-sm btn-outline-light" disabled>
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="tw-flex tw-items-center tw-space-x-3">
+                                <span class="tw-text-white tw-text-sm">
+                                    Page <span id="page-num">1</span> of <span id="page-count">1</span>
+                                </span>
+                                <div class="tw-flex tw-items-center tw-space-x-2">
+                                    <button id="zoom-out" class="btn btn-sm btn-outline-light">
+                                        <i class="fas fa-search-minus"></i>
+                                    </button>
+                                    <span class="tw-text-white tw-text-sm" id="zoom-level">100%</span>
+                                    <button id="zoom-in" class="btn btn-sm btn-outline-light">
+                                        <i class="fas fa-search-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% elif 'image' in document.mime_type %}
+            <!-- Image Viewer -->
+            <div class="card">
+                <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                    <h5 class="tw-mb-0 tw-text-white">
+                        <i class="fas fa-file-image tw-mr-2 tw-text-blue-500"></i>Image Viewer
+                    </h5>
+                </div>
+                <div class="card-body tw-text-center">
+                    <img src="{{ url_for('public.view_document', doc_id=document.id) }}" 
+                         alt="{{ document.title }}" 
+                         class="img-fluid tw-rounded-lg tw-shadow-lg"
+                         style="max-height: 600px;">
+                </div>
+            </div>
+            
+            {% elif 'word' in document.mime_type or 'document' in document.mime_type %}
+            <!-- DOCX/DOC Viewer -->
+            <div class="card tw-bg-gray-50">
+                <div class="card-header tw-bg-gray-100 tw-border-b tw-border-gray-300">
+                    <h5 class="tw-mb-0 tw-text-gray-800">
+                        <i class="fas fa-file-word tw-mr-2 tw-text-blue-600"></i>Document Viewer
+                    </h5>
+                </div>
+                <div class="card-body tw-p-0 tw-bg-gray-50">
+                    <div class="docx-viewer-content tw-p-6 tw-bg-white tw-min-h-96 tw-max-h-[600px] tw-overflow-y-auto tw-border tw-border-gray-200 tw-rounded-lg tw-m-2">
+                        <div class="tw-text-center tw-py-8">
+                            <div class="tw-spinner-border tw-text-primary tw-mb-3" role="status">
+                                <span class="tw-sr-only">Loading document...</span>
+                            </div>
+                            <p class="tw-text-gray-600">Loading document...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% elif 'sheet' in document.mime_type %}
+            <!-- Excel Viewer -->
+            <div class="card">
+                <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                    <h5 class="tw-mb-0 tw-text-white">
+                        <i class="fas fa-file-excel tw-mr-2 tw-text-green-600"></i>Spreadsheet Viewer
+                    </h5>
+                </div>
+                <div class="card-body tw-text-center tw-py-8">
+                    <div class="tw-mb-4">
+                        <i class="fas fa-file-excel tw-text-6xl tw-text-green-600 tw-mb-3"></i>
+                        <h4 class="tw-text-white tw-mb-2">{{ document.title }}</h4>
+                        <p class="tw-text-gray-400">{{ document.original_filename }}</p>
+                    </div>
+                    <div class="tw-mb-4">
+                        <p class="tw-text-gray-300 tw-mb-3">
+                            This spreadsheet cannot be previewed in the browser. 
+                            Please download it to view the content.
+                        </p>
+                        <a href="{{ url_for('public.download_document', doc_id=document.id) }}" 
+                           class="btn btn-primary btn-lg">
+                            <i class="fas fa-download tw-mr-2"></i>Download Spreadsheet
+                        </a>
+                    </div>
+                    <div class="tw-text-sm tw-text-gray-500">
+                        <p class="tw-mb-1">Supported formats: Microsoft Excel (.xlsx, .xls)</p>
+                        <p class="tw-mb-0">File size: {{ document.file_size|filesizeformat }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            {% elif 'presentation' in document.mime_type %}
+            <!-- PowerPoint Viewer -->
+            <div class="card">
+                <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                    <h5 class="tw-mb-0 tw-text-white">
+                        <i class="fas fa-file-powerpoint tw-mr-2 tw-text-orange-600"></i>Presentation Viewer
+                    </h5>
+                </div>
+                <div class="card-body tw-text-center tw-py-8">
+                    <div class="tw-mb-4">
+                        <i class="fas fa-file-powerpoint tw-text-6xl tw-text-orange-600 tw-mb-3"></i>
+                        <h4 class="tw-text-white tw-mb-2">{{ document.title }}</h4>
+                        <p class="tw-text-gray-400">{{ document.original_filename }}</p>
+                    </div>
+                    <div class="tw-mb-4">
+                        <p class="tw-text-gray-300 tw-mb-3">
+                            This presentation cannot be previewed in the browser. 
+                            Please download it to view the content.
+                        </p>
+                        <a href="{{ url_for('public.download_document', doc_id=document.id) }}" 
+                           class="btn btn-primary btn-lg">
+                            <i class="fas fa-download tw-mr-2"></i>Download Presentation
+                        </a>
+                    </div>
+                    <div class="tw-text-sm tw-text-gray-500">
+                        <p class="tw-mb-1">Supported formats: Microsoft PowerPoint (.pptx, .ppt)</p>
+                        <p class="tw-mb-0">File size: {{ document.file_size|filesizeformat }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            {% else %}
+            <!-- Generic File Viewer -->
+            <div class="card">
+                <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                    <h5 class="tw-mb-0 tw-text-white">
+                        <i class="fas fa-file tw-mr-2 tw-text-gray-500"></i>File Viewer
+                    </h5>
+                </div>
+                <div class="card-body tw-text-center tw-py-8">
+                    <div class="tw-mb-4">
+                        <i class="fas fa-file tw-text-6xl tw-text-gray-500 tw-mb-3"></i>
+                        <h4 class="tw-text-white tw-mb-2">{{ document.title }}</h4>
+                        <p class="tw-text-gray-400">{{ document.original_filename }}</p>
+                    </div>
+                    <div class="tw-mb-4">
+                        <p class="tw-text-gray-300 tw-mb-3">
+                            This file type cannot be previewed in the browser. 
+                            Please download it to view the content.
+                        </p>
+                        <a href="{{ url_for('public.download_document', doc_id=document.id) }}" 
+                           class="btn btn-primary btn-lg">
+                            <i class="fas fa-download tw-mr-2"></i>Download File
+                        </a>
+                    </div>
+                    <div class="tw-text-sm tw-text-gray-500">
+                        <p class="tw-mb-1">File type: {{ document.mime_type }}</p>
+                        <p class="tw-mb-0">File size: {{ document.file_size|filesizeformat }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Document Actions -->
+        <div class="platform-stats glow-effect">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-cogs tw-mr-2 tw-text-green-400"></i>Document Actions
+            </h3>
+            <div class="tw-space-y-3">
+                <a href="{{ url_for('public.download_document', doc_id=document.id) }}" 
+                   class="btn btn-success w-100">
+                    <i class="fas fa-download tw-mr-2"></i>Download Document
+                </a>
+                <a href="{{ url_for('public.course_overview', prefix=document.course.prefix) }}" 
+                   class="btn btn-outline-primary w-100">
+                    <i class="fas fa-graduation-cap tw-mr-2"></i>View Course
+                </a>
+                <a href="{{ url_for('public.search') }}?q={{ document.title }}" 
+                   class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-search tw-mr-2"></i>Search Similar
+                </a>
+            </div>
+        </div>
+
+        <!-- Document Details -->
+        <div class="quick-search glow-effect">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-info-circle tw-mr-2 tw-text-green-400"></i>Document Details
+            </h3>
+            <div class="tw-space-y-3">
+                <div class="tw-flex tw-justify-between">
+                    <span class="tw-text-gray-400">Category:</span>
+                    <span class="tw-text-white">{{ document.category|title }}</span>
+                </div>
+                <div class="tw-flex tw-justify-between">
+                    <span class="tw-text-gray-400">File Size:</span>
+                    <span class="tw-text-white">{{ document.file_size|filesizeformat }}</span>
+                </div>
+                <div class="tw-flex tw-justify-between">
+                    <span class="tw-text-gray-400">Uploaded:</span>
+                    <span class="tw-text-white">{{ document.created_at.strftime('%m/%d/%Y') }}</span>
+                </div>
+                <div class="tw-flex tw-justify-between">
+                    <span class="tw-text-gray-400">Visibility:</span>
+                    {% if document.visibility == 'public' %}
+                    <span class="badge bg-success">Public</span>
+                    {% else %}
+                    <span class="badge bg-warning">Private</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Documents -->
+        <div class="recent-activity glow-effect">
+            <h3 class="tw-text-xl tw-font-bold tw-mb-4 tw-text-white">
+                <i class="fas fa-folder tw-mr-2 tw-text-green-400"></i>Related Documents
+            </h3>
+            <div class="tw-space-y-3">
+                {% for related_doc in related_documents[:5] %}
+                <div class="tw-flex tw-items-center tw-p-3 tw-bg-gray-700 tw-rounded-lg hover:tw-bg-gray-600 tw-transition-all tw-duration-200 tw-cursor-pointer tw-group" 
+                     onclick="window.location.href='{{ url_for('public.view_document', doc_id=related_doc.id) }}'">
+                    {% if related_doc.mime_type == 'application/pdf' %}
+                    <i class="fas fa-file-pdf tw-text-red-500 tw-mr-3 tw-text-lg group-hover:tw-text-red-400 tw-transition-colors"></i>
+                    {% elif 'image' in related_doc.mime_type %}
+                    <i class="fas fa-file-image tw-text-blue-500 tw-mr-3 tw-text-lg group-hover:tw-text-blue-400 tw-transition-colors"></i>
+                    {% elif 'word' in related_doc.mime_type or 'document' in related_doc.mime_type %}
+                    <i class="fas fa-file-word tw-text-blue-600 tw-mr-3 tw-text-lg group-hover:tw-text-blue-400 tw-transition-colors"></i>
+                    {% else %}
+                    <i class="fas fa-file tw-text-gray-500 tw-mr-3 tw-text-lg group-hover:tw-text-gray-400 tw-transition-colors"></i>
+                    {% endif %}
+                    <div class="tw-flex-1">
+                        <a href="{{ url_for('public.view_document', doc_id=related_doc.id) }}" 
+                           class="tw-text-white tw-text-sm hover:tw-text-green-400 tw-font-medium tw-block tw-no-underline group-hover:tw-text-green-400 tw-transition-colors">
+                            {{ related_doc.title }}
+                        </a>
+                        <p class="tw-text-xs tw-text-gray-400 tw-mb-0 group-hover:tw-text-gray-300 tw-transition-colors">{{ related_doc.category_obj.name if related_doc.category_obj else 'Unknown' }}</p>
+                    </div>
+                    <div class="tw-opacity-0 group-hover:tw-opacity-100 tw-transition-opacity">
+                        <i class="fas fa-arrow-right tw-text-green-400 tw-text-sm"></i>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not related_documents %}
+                <p class="tw-text-sm tw-text-gray-400 tw-mb-0">
+                    <i class="fas fa-info-circle tw-mr-2"></i>
+                    No related documents found.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PDF.js and Mammoth.js with fallback -->
+<script>
+// Try to load PDF.js from CDN first, fallback to local
+function loadScript(src, fallbackSrc) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = () => {
+            console.log(`Failed to load ${src}, trying fallback...`);
+            const fallbackScript = document.createElement('script');
+            fallbackScript.src = fallbackSrc;
+            fallbackScript.onload = resolve;
+            fallbackScript.onerror = reject;
+            document.head.appendChild(fallbackScript);
+        };
+        document.head.appendChild(script);
+    });
+}
+
+// Load libraries with fallback
+Promise.all([
+    loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js', '{{ url_for("static", filename="js/libs/pdf.min.js") }}'),
+    loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js', '{{ url_for("static", filename="js/libs/mammoth.browser.min.js") }}')
+]).then(() => {
+    console.log('Libraries loaded successfully');
+    initializeViewers();
+}).catch((error) => {
+    console.error('Failed to load libraries:', error);
+    showError('Failed to load document viewer libraries. Please refresh the page.');
+});
+
+function showError(message) {
+    const pdfViewer = document.getElementById('pdf-viewer');
+    const docxViewer = document.querySelector('.docx-viewer-content');
+    
+    if (pdfViewer) {
+        pdfViewer.innerHTML = `
+            <div class="tw-text-center tw-p-8">
+                <i class="fas fa-exclamation-triangle tw-text-yellow-500 tw-text-4xl tw-mb-3"></i>
+                <p class="tw-text-gray-600 tw-mb-3">${message}</p>
+                <a href="{{ url_for('public.download_document', doc_id=document.id) }}" class="btn btn-primary">
+                    <i class="fas fa-download tw-mr-2"></i>Download Document
+                </a>
+            </div>
+        `;
+    }
+    
+    if (docxViewer) {
+        docxViewer.innerHTML = `
+            <div class="tw-text-center tw-p-8">
+                <i class="fas fa-exclamation-triangle tw-text-yellow-500 tw-text-4xl tw-mb-3"></i>
+                <p class="tw-text-gray-600 tw-mb-3">${message}</p>
+                <a href="{{ url_for('public.download_document', doc_id=document.id) }}" class="btn btn-primary">
+                    <i class="fas fa-download tw-mr-2"></i>Download Document
+                </a>
+            </div>
+        `;
+    }
+}
+
+function initializeViewers() {
+    // PDF.js configuration
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    
+    // Try local worker as fallback
+    const workerScript = document.createElement('script');
+    workerScript.onerror = () => {
+        console.log('CDN worker failed, using local worker');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '{{ url_for("static", filename="js/libs/pdf.worker.min.js") }}';
+    };
+    workerScript.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    document.head.appendChild(workerScript);
+    
+    // Initialize PDF viewer if this is a PDF document
+    {% if document.mime_type == 'application/pdf' %}
+    document.addEventListener('DOMContentLoaded', function() {
+        const pdfViewer = document.getElementById('pdf-viewer');
+        if (pdfViewer) {
+            pdfViewer.appendChild(canvas);
+            loadPDF('{{ url_for("public.serve_document", doc_id=document.id) }}');
+        }
+    });
+    {% endif %}
+
+    // Initialize DOCX viewer if this is a DOCX document
+    {% if 'word' in document.mime_type or 'document' in document.mime_type %}
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDOCX('{{ url_for("public.serve_document", doc_id=document.id) }}');
+    });
+    {% endif %}
+}
+
+// PDF viewer variables and functions
+let pdfDoc = null;
+let pageNum = 1;
+let pageRendering = false;
+let pageNumPending = null;
+let scale = 1.0;
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+
+function loadPDF(url) {
+    pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
+        pdfDoc = pdfDoc_;
+        document.getElementById('page-count').textContent = pdfDoc.numPages;
+        
+        // Initial page render
+        renderPage(pageNum);
+        
+        // Enable/disable buttons
+        document.getElementById('prev-page').disabled = pageNum <= 1;
+        document.getElementById('next-page').disabled = pageNum >= pdfDoc.numPages;
+    }).catch(function(error) {
+        console.error('Error loading PDF:', error);
+        document.getElementById('pdf-viewer').innerHTML = `
+            <div class="tw-text-center tw-p-8">
+                <i class="fas fa-exclamation-triangle tw-text-yellow-500 tw-text-4xl tw-mb-3"></i>
+                <p class="tw-text-gray-600 tw-mb-3">Failed to load PDF</p>
+                <a href="{{ url_for('public.download_document', doc_id=document.id) }}" class="btn btn-primary">
+                    <i class="fas fa-download tw-mr-2"></i>Download PDF
+                </a>
+            </div>
+        `;
+    });
+}
+
+function renderPage(num) {
+    pageRendering = true;
+    
+    pdfDoc.getPage(num).then(function(page) {
+        const viewport = page.getViewport({scale: scale});
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        
+        const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+        };
+        
+        const renderTask = page.render(renderContext);
+        
+        renderTask.promise.then(function() {
+            pageRendering = false;
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+        });
+    });
+    
+    document.getElementById('page-num').textContent = num;
+    document.getElementById('zoom-level').textContent = Math.round(scale * 100) + '%';
+}
+
+function queueRenderPage(num) {
+    if (pageRendering) {
+        pageNumPending = num;
+    } else {
+        renderPage(num);
+    }
+}
+
+// PDF event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    {% if document.mime_type == 'application/pdf' %}
+    document.getElementById('prev-page').addEventListener('click', function() {
+        if (pageNum <= 1) return;
+        pageNum--;
+        queueRenderPage(pageNum);
+        document.getElementById('prev-page').disabled = pageNum <= 1;
+        document.getElementById('next-page').disabled = pageNum >= pdfDoc.numPages;
+    });
+
+    document.getElementById('next-page').addEventListener('click', function() {
+        if (pageNum >= pdfDoc.numPages) return;
+        pageNum++;
+        queueRenderPage(pageNum);
+        document.getElementById('prev-page').disabled = pageNum <= 1;
+        document.getElementById('next-page').disabled = pageNum >= pdfDoc.numPages;
+    });
+
+    document.getElementById('zoom-in').addEventListener('click', function() {
+        scale += 0.25;
+        renderPage(pageNum);
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', function() {
+        if (scale <= 0.5) return;
+        scale -= 0.25;
+        renderPage(pageNum);
+    });
+    {% endif %}
+});
+
+// DOCX viewer function
+function loadDOCX(url) {
+    fetch(url)
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => mammoth.convertToHtml({arrayBuffer: arrayBuffer}))
+        .then(result => {
+            const docxViewer = document.querySelector('.docx-viewer-content');
+            if (docxViewer) {
+                docxViewer.innerHTML = result.value;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading DOCX:', error);
+            const docxViewer = document.querySelector('.docx-viewer-content');
+            if (docxViewer) {
+                docxViewer.innerHTML = `
+                    <div class="tw-text-center tw-p-8">
+                        <i class="fas fa-exclamation-triangle tw-text-yellow-500 tw-text-4xl tw-mb-3"></i>
+                        <p class="tw-text-gray-600 tw-mb-3">Failed to load document</p>
+                        <a href="{{ url_for('public.download_document', doc_id=document.id) }}" class="btn btn-primary">
+                            <i class="fas fa-download tw-mr-2"></i>Download Document
+                        </a>
+                    </div>
+                `;
+            }
+        });
+}
+
+function confirmDelete(docId, docTitle) {
+    if (confirm(`Are you sure you want to delete "${docTitle}"?\n\nThis action cannot be undone.`)) {
+        // Create a form to submit the delete request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("public.delete_document", doc_id=0) }}'.replace('0', docId);
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = csrfToken.getAttribute('content');
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+
+<!-- PDF.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+
+<!-- Mammoth.js for DOCX viewing -->
+<script src="{{ url_for('static', filename='js/libs/mammoth.browser.min.js') }}"></script>
+
+<!-- Initialize viewers -->
+<script>
+initializeViewers();
+</script>
+{% endblock %}

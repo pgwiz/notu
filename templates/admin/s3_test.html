@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block title %}S3 Storage Test - Notu{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- S3 Test Header -->
+        <div class="tw-mb-6">
+            <div class="tw-flex tw-items-center tw-mb-4">
+                <div class="tw-bg-blue-500 tw-rounded-full tw-p-3 tw-mr-4">
+                    <i class="fas fa-cloud tw-text-white tw-text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">S3 Storage Test</h1>
+                    <p class="tw-text-gray-400">Test S3 connection and CRUD operations on the notu/ folder</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Configuration -->
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-cog tw-mr-2 tw-text-blue-500"></i>Current Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-database tw-mr-2"></i><strong>Active Storage Backend:</strong>
+                        </p>
+                        <p class="tw-text-white">
+                            {% if storage_backend == 's3' %}
+                                <span class="badge bg-success">S3 Storage</span>
+                            {% else %}
+                                <span class="badge bg-warning">Local Storage</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-bucket tw-mr-2"></i><strong>S3 Bucket:</strong>
+                        </p>
+                        <p class="tw-text-white">{{ s3_bucket_name or 'Not configured' }}</p>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-globe tw-mr-2"></i><strong>S3 Region:</strong>
+                        </p>
+                        <p class="tw-text-white">{{ s3_region or 'Not configured' }}</p>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <p class="tw-text-sm tw-text-gray-400 tw-mb-1">
+                            <i class="fas fa-link tw-mr-2"></i><strong>S3 Endpoint:</strong>
+                        </p>
+                        <p class="tw-text-white">{{ s3_endpoint_url or 'AWS Default' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-vial tw-mr-2 tw-text-green-500"></i>Test Results
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if test_results %}
+                    <div class="row">
+                        <div class="col-md-6 tw-mb-3">
+                            <div class="tw-text-center tw-p-4 tw-bg-gray-900 tw-rounded">
+                                <div class="tw-text-2xl tw-font-bold {% if test_results.connection %}tw-text-green-400{% else %}tw-text-red-400{% endif %}">
+                                    {% if test_results.connection %}✅{% else %}❌{% endif %}
+                                </div>
+                                <div class="tw-text-sm tw-text-gray-400">Connection</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 tw-mb-3">
+                            <div class="tw-text-center tw-p-4 tw-bg-gray-900 tw-rounded">
+                                <div class="tw-text-2xl tw-font-bold {% if test_results.upload %}tw-text-green-400{% else %}tw-text-red-400{% endif %}">
+                                    {% if test_results.upload %}✅{% else %}❌{% endif %}
+                                </div>
+                                <div class="tw-text-sm tw-text-gray-400">Upload</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 tw-mb-3">
+                            <div class="tw-text-center tw-p-4 tw-bg-gray-900 tw-rounded">
+                                <div class="tw-text-2xl tw-font-bold {% if test_results.download %}tw-text-green-400{% else %}tw-text-red-400{% endif %}">
+                                    {% if test_results.download %}✅{% else %}❌{% endif %}
+                                </div>
+                                <div class="tw-text-sm tw-text-gray-400">Download</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 tw-mb-3">
+                            <div class="tw-text-center tw-p-4 tw-bg-gray-900 tw-rounded">
+                                <div class="tw-text-2xl tw-font-bold {% if test_results.delete %}tw-text-green-400{% else %}tw-text-red-400{% endif %}">
+                                    {% if test_results.delete %}✅{% else %}❌{% endif %}
+                                </div>
+                                <div class="tw-text-sm tw-text-gray-400">Delete</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if test_results.errors %}
+                    <div class="tw-mt-4">
+                        <h6 class="tw-text-red-400 tw-mb-2">Errors:</h6>
+                        <div class="tw-bg-gray-900 tw-p-3 tw-rounded tw-border">
+                            <pre class="tw-text-red-400 tw-text-sm tw-mb-0">{{ test_results.errors }}</pre>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if test_results.test_file_info %}
+                    <div class="tw-mt-4">
+                        <h6 class="tw-text-blue-400 tw-mb-2">Test File Info:</h6>
+                        <div class="tw-bg-gray-900 tw-p-3 tw-rounded tw-border">
+                            <p class="tw-text-white tw-mb-1"><strong>Key:</strong> {{ test_results.test_file_info.key }}</p>
+                            <p class="tw-text-white tw-mb-1"><strong>Size:</strong> {{ test_results.test_file_info.size }} bytes</p>
+                            <p class="tw-text-white tw-mb-1"><strong>ETag:</strong> {{ test_results.test_file_info.etag }}</p>
+                            <p class="tw-text-white tw-mb-0"><strong>Last Modified:</strong> {{ test_results.test_file_info.last_modified }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <p class="tw-text-gray-400 tw-text-center">No test results available. Click "Run S3 Tests" to perform tests.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Custom Upload Test -->
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-upload tw-mr-2 tw-text-blue-500"></i>Custom Upload Test
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.s3_test') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="action" value="custom_upload">
+                    
+                    <div class="row">
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="test_file" class="form-label tw-text-white">Select Test File:</label>
+                            <input type="file" class="form-control" id="test_file" name="test_file" required>
+                            <div class="form-text tw-text-gray-400">Choose any file to test S3 upload</div>
+                        </div>
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="test_key" class="form-label tw-text-white">S3 Key (optional):</label>
+                            <input type="text" class="form-control" id="test_key" name="test_key" placeholder="test/custom_file.txt">
+                            <div class="form-text tw-text-gray-400">Leave empty for auto-generated key</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tw-text-center">
+                        <button type="submit" class="btn btn-primary tw-flex tw-items-center tw-justify-center tw-mx-auto">
+                            <i class="fas fa-cloud-upload-alt tw-mr-2"></i>Upload to S3
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Test Actions -->
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-play tw-mr-2 tw-text-yellow-500"></i>Test Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="tw-flex tw-flex-col sm:tw-flex-row tw-gap-3 tw-justify-center">
+                    <form method="POST" action="{{ url_for('admin.s3_test') }}" class="tw-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="action" value="run_tests">
+                        <button type="submit" class="btn btn-primary tw-flex tw-items-center tw-justify-center">
+                            <i class="fas fa-play tw-mr-2"></i>Run S3 Tests
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('admin.s3_test') }}" class="tw-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="action" value="list_files">
+                        <button type="submit" class="btn btn-outline-primary tw-flex tw-items-center tw-justify-center">
+                            <i class="fas fa-list tw-mr-2"></i>List Files in notu/
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('admin.s3_test') }}" class="tw-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="action" value="cleanup">
+                        <button type="submit" class="btn btn-outline-danger tw-flex tw-items-center tw-justify-center">
+                            <i class="fas fa-trash tw-mr-2"></i>Cleanup Test Files
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- S3 Bucket Structure -->
+        {% if prefix_results %}
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-sitemap tw-mr-2 tw-text-blue-500"></i>S3 Bucket Structure
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for prefix, files in prefix_results.items() %}
+                    <div class="col-md-6 tw-mb-4">
+                        <div class="tw-bg-gray-900 tw-p-3 tw-rounded tw-border">
+                            <h6 class="tw-text-white tw-mb-2">
+                                <i class="fas fa-folder tw-mr-2 tw-text-blue-400"></i>
+                                {% if prefix == '' %}
+                                    Root (all files)
+                                {% else %}
+                                    {{ prefix }}
+                                {% endif %}
+                                <span class="badge bg-primary tw-ml-2">{{ files|length }}</span>
+                            </h6>
+                            {% if files %}
+                                <div class="tw-max-h-32 tw-overflow-y-auto">
+                                    {% for file in files[:10] %}
+                                    <div class="tw-text-xs tw-text-gray-300 tw-mb-1">
+                                        <i class="fas fa-file tw-mr-1 tw-text-green-400"></i>
+                                        <code class="tw-text-green-400">{{ file.key }}</code>
+                                        <span class="tw-text-gray-500">({{ file.size|filesizeformat }})</span>
+                                    </div>
+                                    {% endfor %}
+                                    {% if files|length > 10 %}
+                                    <div class="tw-text-xs tw-text-gray-500 tw-mt-2">
+                                        ... and {{ files|length - 10 }} more files
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="tw-text-gray-500 tw-text-sm">
+                                    <i class="fas fa-folder-open tw-mr-1"></i>No files
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Debug Information -->
+        {% if debug_info %}
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-bug tw-mr-2 tw-text-yellow-500"></i>Debug Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="tw-text-white tw-mb-1">
+                            <strong>Total files in bucket:</strong> 
+                            <span class="tw-text-blue-400">{{ debug_info.total_files }}</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="tw-text-white tw-mb-1">
+                            <strong>Files in notu/ folder:</strong> 
+                            <span class="tw-text-green-400">{{ debug_info.notu_files }}</span>
+                        </p>
+                    </div>
+                </div>
+                {% if debug_info.total_files > 0 and debug_info.notu_files == 0 %}
+                <div class="tw-mt-3 tw-p-3 tw-bg-yellow-900 tw-rounded tw-border tw-border-yellow-600">
+                    <p class="tw-text-yellow-200 tw-mb-0">
+                        <i class="fas fa-exclamation-triangle tw-mr-2"></i>
+                        <strong>Note:</strong> Files exist in the bucket but none are in the notu/ folder. 
+                        This might mean files are being stored with a different prefix or structure.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- File List -->
+        {% if file_list %}
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-folder tw-mr-2 tw-text-purple-500"></i>Files in notu/ folder ({{ file_list|length }})
+                </h5>
+            </div>
+            <div class="card-body tw-p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark tw-mb-0">
+                        <thead class="tw-bg-gray-900">
+                            <tr>
+                                <th class="tw-border-gray-700">Key</th>
+                                <th class="tw-border-gray-700">Size</th>
+                                <th class="tw-border-gray-700">Last Modified</th>
+                                <th class="tw-border-gray-700">ETag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in file_list %}
+                            <tr class="tw-border-gray-700">
+                                <td>
+                                    <code class="tw-text-green-400 tw-text-sm">{{ file.key }}</code>
+                                </td>
+                                <td>
+                                    <span class="tw-text-white">{{ file.size|filesizeformat }}</span>
+                                </td>
+                                <td>
+                                    <span class="tw-text-white">{{ file.last_modified.strftime('%Y-%m-%d %H:%M:%S') if file.last_modified else 'N/A' }}</span>
+                                </td>
+                                <td>
+                                    <code class="tw-text-blue-400 tw-text-xs">{{ file.etag }}</code>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% elif debug_info and debug_info.total_files == 0 %}
+        <div class="card tw-mb-6">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-folder tw-mr-2 tw-text-purple-500"></i>Files in S3 Bucket
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="tw-text-center tw-py-4">
+                    <i class="fas fa-folder-open tw-text-gray-500 tw-text-4xl tw-mb-3"></i>
+                    <p class="tw-text-gray-400 tw-mb-0">No files found in the S3 bucket</p>
+                    <p class="tw-text-gray-500 tw-text-sm tw-mt-2">Try uploading a file using the custom upload feature above</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Instructions -->
+        <div class="card">
+            <div class="card-header tw-bg-gray-800 tw-border-b tw-border-gray-700">
+                <h5 class="tw-mb-0 tw-text-white">
+                    <i class="fas fa-info-circle tw-mr-2 tw-text-blue-500"></i>Test Instructions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="tw-text-green-400 tw-mb-2">What the tests do:</h6>
+                        <ul class="tw-text-gray-300 tw-text-sm">
+                            <li><strong>Connection:</strong> Tests S3 credentials and bucket access</li>
+                            <li><strong>Upload:</strong> Uploads a test file to notu/test/</li>
+                            <li><strong>Download:</strong> Downloads and verifies the test file</li>
+                            <li><strong>Delete:</strong> Removes the test file from S3</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="tw-text-yellow-400 tw-mb-2">Expected results:</h6>
+                        <ul class="tw-text-gray-300 tw-text-sm">
+                            <li>All tests should show ✅ for successful S3 setup</li>
+                            <li>Test file should be created in notu/test/ folder</li>
+                            <li>File should be downloadable and deletable</li>
+                            <li>Any errors will be displayed in the error section</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

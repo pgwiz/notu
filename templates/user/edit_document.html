@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Document - Notu{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="futuristic-card glow-effect">
+            <div class="card-header">
+                <h4 class="tw-mb-0">
+                    <i class="fas fa-edit tw-mr-2 tw-text-green-400"></i>Edit Document
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="futuristic-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <!-- Document Info Display -->
+                    <div class="tw-mb-4">
+                        <div class="tw-bg-gray-800 tw-p-4 tw-rounded-lg tw-border tw-border-gray-700">
+                            <h6 class="tw-text-white tw-mb-3">
+                                <i class="fas fa-file tw-mr-2 tw-text-green-400"></i>Current Document
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="tw-text-gray-400 tw-text-sm tw-mb-1">Filename:</div>
+                                    <div class="tw-text-white tw-font-medium">{{ document.original_filename }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="tw-text-gray-400 tw-text-sm tw-mb-1">Size:</div>
+                                    <div class="tw-text-white">{{ document.file_size|filesizeformat }}</div>
+                                </div>
+                            </div>
+                            <div class="row tw-mt-2">
+                                <div class="col-md-6">
+                                    <div class="tw-text-gray-400 tw-text-sm tw-mb-1">Course:</div>
+                                    <div class="tw-text-white">{{ document.course.name }} ({{ document.course.prefix }})</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="tw-text-gray-400 tw-text-sm tw-mb-1">Uploaded:</div>
+                                    <div class="tw-text-white">{{ document.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Edit Form Fields -->
+                    <div class="tw-mb-4">
+                        <label for="title" class="form-label">Document Title</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{{ document.title }}" required 
+                               placeholder="Enter document title...">
+                        <div class="form-text">This will be displayed as the document name</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Select category...</option>
+                                <option value="notes" {% if document.category_obj.slug == 'notes' %}selected{% endif %}>Notes</option>
+                                <option value="assignments" {% if document.category_obj.slug == 'assignments' %}selected{% endif %}>Assignments</option>
+                                <option value="lectures" {% if document.category_obj.slug == 'lectures' %}selected{% endif %}>Lectures</option>
+                                <option value="exams" {% if document.category_obj.slug == 'exams' %}selected{% endif %}>Exams</option>
+                                <option value="projects" {% if document.category_obj.slug == 'projects' %}selected{% endif %}>Projects</option>
+                                <option value="others" {% if document.category_obj.slug == 'others' %}selected{% endif %}>Others</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 tw-mb-3">
+                            <label for="visibility" class="form-label">Visibility</label>
+                            <select class="form-select" id="visibility" name="visibility" required>
+                                <option value="public" {% if document.visibility == 'public' %}selected{% endif %}>
+                                    <i class="fas fa-globe tw-mr-1"></i>Public - Visible to everyone
+                                </option>
+                                <option value="private" {% if document.visibility == 'private' %}selected{% endif %}>
+                                    <i class="fas fa-lock tw-mr-1"></i>Private - Only visible to you
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="tw-flex tw-justify-between tw-items-center tw-mt-4">
+                        <div>
+                            <a href="{{ url_for('user.documents') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left tw-mr-2"></i>Cancel
+                            </a>
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save tw-mr-2"></i>Update Document
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Additional Actions -->
+        <div class="futuristic-card glow-effect tw-mt-4">
+            <div class="card-header">
+                <h5 class="tw-mb-0">
+                    <i class="fas fa-cogs tw-mr-2 tw-text-yellow-400"></i>Additional Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 tw-mb-3">
+                        <a href="{{ url_for('public.view_document', doc_id=document.id) }}" 
+                           class="btn btn-outline-primary w-100">
+                            <i class="fas fa-eye tw-mr-2"></i>View Document
+                        </a>
+                    </div>
+                    <div class="col-md-6 tw-mb-3">
+                        <button type="button" class="btn btn-outline-danger w-100" 
+                                onclick="confirmDelete('{{ document.id }}', '{{ document.title }}')">
+                            <i class="fas fa-trash tw-mr-2"></i>Delete Document
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content futuristic-card">
+            <div class="modal-header">
+                <h5 class="modal-title tw-text-white">
+                    <i class="fas fa-exclamation-triangle tw-mr-2 tw-text-red-400"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="tw-text-white">Are you sure you want to delete this document?</p>
+                <div class="tw-bg-gray-800 tw-p-3 tw-rounded tw-mt-3">
+                    <div class="tw-text-gray-400 tw-text-sm">Document:</div>
+                    <div class="tw-text-white tw-font-medium" id="delete-doc-title"></div>
+                </div>
+                <div class="tw-text-red-400 tw-text-sm tw-mt-2">
+                    <i class="fas fa-warning tw-mr-1"></i>This action cannot be undone!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('user.delete_document', doc_id=document.id) }}" style="display: inline;">
+                    {{ csrf_token() }}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash tw-mr-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function confirmDelete(docId, docTitle) {
+    document.getElementById('delete-doc-title').textContent = docTitle;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const titleInput = document.getElementById('title');
+    
+    form.addEventListener('submit', function(e) {
+        const title = titleInput.value.trim();
+        if (!title) {
+            e.preventDefault();
+            titleInput.focus();
+            alert('Please enter a document title.');
+            return false;
+        }
+        
+        if (title.length > 200) {
+            e.preventDefault();
+            titleInput.focus();
+            alert('Document title must be less than 200 characters.');
+            return false;
+        }
+    });
+    
+    // Auto-save title changes
+    titleInput.addEventListener('input', function() {
+        const value = this.value.trim();
+        if (value && value !== '{{ document.title }}') {
+            this.classList.add('tw-border-yellow-400');
+        } else {
+            this.classList.remove('tw-border-yellow-400');
+        }
+    });
+});
+</script>
+{% endblock %}

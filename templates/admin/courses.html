@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Courses - Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="tw-flex tw-justify-between tw-items-center tw-mb-6">
+            <div>
+                <h1 class="tw-text-3xl tw-font-bold tw-text-white tw-mb-2">
+                    <i class="fas fa-graduation-cap tw-mr-2 tw-text-green-400"></i>Manage Courses
+                </h1>
+                <p class="tw-text-gray-400">Create, edit, and manage courses.</p>
+            </div>
+            <a href="{{ url_for('admin.create_course') }}" class="btn btn-primary">
+                <i class="fas fa-plus tw-mr-2"></i>Create Course
+            </a>
+        </div>
+        
+        {% if courses %}
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Prefix</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                            <tr>
+                                <td>
+                                    <div class="tw-flex tw-items-center">
+                                        <i class="fas fa-graduation-cap tw-text-green-400 tw-mr-2"></i>
+                                        {{ course.name }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-secondary">{{ course.prefix }}</span>
+                                </td>
+                                <td class="tw-text-gray-400">
+                                    {% if course.description %}
+                                        {{ course.description[:50] }}{% if course.description|length > 50 %}...{% endif %}
+                                    {% else %}
+                                        <span class="tw-text-gray-500">No description</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if course.is_active %}
+                                        <span class="badge badge-success">Active</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td class="tw-text-gray-400">
+                                    {{ course.created_at.strftime('%Y-%m-%d') }}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('admin.edit_course', course_id=course.id) }}" class="btn btn-outline-primary" title="Edit Course">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin.manage_units', course_id=course.id) }}" class="btn btn-outline-info" title="Manage Units">
+                                            <i class="fas fa-layer-group"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin.manage_categories', course_id=course.id) }}" class="btn btn-outline-success" title="Manage Categories">
+                                            <i class="fas fa-tags"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger" onclick="deleteCourse({{ course.id }}, '{{ course.name }}')" title="Delete Course">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body tw-text-center tw-py-8">
+                <i class="fas fa-graduation-cap tw-text-4xl tw-text-gray-500 tw-mb-3"></i>
+                <h5 class="tw-text-gray-400 tw-mb-3">No courses created yet</h5>
+                <p class="tw-text-gray-500 tw-mb-4">Create your first course to get started!</p>
+                <a href="{{ url_for('admin.create_course') }}" class="btn btn-primary">
+                    <i class="fas fa-plus tw-mr-2"></i>Create Course
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the course "<span id="courseName"></span>"?</p>
+                <p class="tw-text-danger tw-text-sm">
+                    <i class="fas fa-exclamation-triangle tw-mr-2"></i>
+                    This action cannot be undone and will affect all associated documents.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Course</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function deleteCourse(courseId, courseName) {
+    document.getElementById('courseName').textContent = courseName;
+    document.getElementById('deleteForm').action = `/admin/courses/${courseId}/delete`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %}
